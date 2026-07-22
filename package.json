@@ -1,0 +1,49 @@
+{
+  "name": "@search1api/client",
+  "version": "0.1.0",
+  "description": "Official TypeScript client for Search1API",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/superagents-lab/search1api-js.git"
+  },
+  "homepage": "https://www.search1api.com/docs/integrations/sdks",
+  "bugs": {
+    "url": "https://github.com/superagents-lab/search1api-js/issues"
+  },
+  "scripts": {
+    "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && npm run build:js && npm run build:types",
+    "build:js": "esbuild src/index.ts --bundle --platform=neutral --target=es2022 --format=esm --sourcemap --outfile=dist/index.js && esbuild src/index.ts --bundle --platform=neutral --target=es2022 --format=cjs --sourcemap --outfile=dist/index.cjs",
+    "build:types": "tsc -p tsconfig.build.json",
+    "generate": "openapi-typescript openapi/search1api.openapi.json -o src/generated.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "esbuild": "^0.28.1",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.6"
+  },
+  "overrides": {
+    "js-yaml": "4.3.0"
+  }
+}

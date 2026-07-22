@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 22]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - name: Verify generated OpenAPI types
+        run: |
+          npm run generate
+          git diff --exit-code -- src/generated.ts
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Verify package contents
+        if: matrix.node-version == 22
+        run: npm pack --dry-run

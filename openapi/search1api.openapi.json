@@ -1,0 +1,2581 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Search1API",
+    "description": "Web search, news, crawling, screenshots, and content extraction APIs for AI agents. Supports pay-per-request via MPP and x402 protocols.",
+    "version": "1.0.0",
+    "x-guidance": "Search1API provides web search, news aggregation, URL crawling, screenshots, sitemap extraction, trending topics, content extraction, and deep crawling. All paid endpoints accept POST with a JSON body. Use POST /search with a \"query\" field for web search. Use POST /news with a \"query\" field for news. Use POST /crawl with a \"url\" field to crawl a page. Use POST /screenshot with a \"url\" field to receive an image response. Use POST /sitemap with a \"url\" field to extract sitemap URLs. Use POST /trending with a \"search_service\" field for trends. Use POST /extract with a \"url\" field for structured content extraction. Use POST /deepcrawl with a \"url\" field for deep multi-page crawling."
+  },
+  "x-discovery": {
+    "ownershipProofs": []
+  },
+  "servers": [
+    {
+      "url": "https://api.search1api.com"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key"
+      }
+    },
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "description": "Search1API error. Payment challenges may use RFC 9457 problem detail fields.",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "code": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "type": {
+            "type": "string",
+            "format": "uri"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "detail": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SearchParameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "search_service": {
+            "type": "string",
+            "enum": [
+              "google",
+              "bing",
+              "duckduckgo",
+              "yahoo",
+              "youtube",
+              "x",
+              "reddit",
+              "github",
+              "arxiv",
+              "wechat",
+              "bilibili",
+              "imdb",
+              "wikipedia",
+              "",
+              "sogou",
+              "baidu",
+              "360",
+              "quark"
+            ]
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 5
+          },
+          "crawl_results": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 50,
+            "default": 0
+          },
+          "image": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_sites": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "exclude_sites": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "language": {
+            "type": "string"
+          },
+          "time_range": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year",
+              ""
+            ]
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "NewsParameters": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "search_service": {
+            "type": "string",
+            "enum": [
+              "google",
+              "bing",
+              "duckduckgo",
+              "yahoo",
+              "hackernews",
+              "",
+              "reuters"
+            ]
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "default": 5
+          },
+          "crawl_results": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 50,
+            "default": 0
+          },
+          "image": {
+            "type": "boolean",
+            "default": false
+          },
+          "include_sites": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "exclude_sites": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": []
+          },
+          "language": {
+            "type": "string"
+          },
+          "time_range": {
+            "type": "string",
+            "enum": [
+              "day",
+              "week",
+              "month",
+              "year",
+              ""
+            ]
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "additionalProperties": false
+      },
+      "CrawlRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "minLength": 1
+          },
+          "enableFallback": {
+            "type": "boolean",
+            "default": false
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "SitemapRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "sitemap",
+              "all"
+            ]
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "TrendingRequest": {
+        "type": "object",
+        "properties": {
+          "search_service": {
+            "type": "string",
+            "minLength": 1
+          },
+          "max_results": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "required": [
+          "search_service"
+        ],
+        "additionalProperties": false
+      },
+      "ExtractRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "response_format": {
+            "type": "object",
+            "additionalProperties": {}
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "DeepcrawlRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "sitemap",
+              "all"
+            ]
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "ScreenshotRequest": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 4096
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "png",
+              "jpeg",
+              "webp"
+            ],
+            "default": "png"
+          },
+          "full_page": {
+            "type": "boolean",
+            "default": false
+          },
+          "viewport": {
+            "type": "object",
+            "properties": {
+              "width": {
+                "type": "integer",
+                "minimum": 320,
+                "maximum": 2560,
+                "default": 1440
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 200,
+                "maximum": 1440,
+                "default": 900
+              },
+              "device_scale_factor": {
+                "type": "number",
+                "minimum": 1,
+                "maximum": 2,
+                "default": 1
+              }
+            },
+            "additionalProperties": false,
+            "default": {
+              "width": 1440,
+              "height": 900,
+              "device_scale_factor": 1
+            }
+          },
+          "wait_until": {
+            "type": "string",
+            "enum": [
+              "domcontentloaded",
+              "load",
+              "networkidle"
+            ],
+            "default": "load"
+          },
+          "wait_for_selector": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "selector": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "delay_ms": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 5000,
+            "default": 0
+          },
+          "timeout_ms": {
+            "type": "integer",
+            "minimum": 1000,
+            "maximum": 30000,
+            "default": 20000
+          },
+          "quality": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "omit_background": {
+            "type": "boolean",
+            "default": false
+          },
+          "color_scheme": {
+            "type": "string",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "default": "light"
+          },
+          "animations": {
+            "type": "string",
+            "enum": [
+              "disabled",
+              "allow"
+            ],
+            "default": "disabled"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "SearchResult": {
+        "type": "object",
+        "required": [
+          "title",
+          "link",
+          "snippet"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "format": "uri"
+          },
+          "snippet": {
+            "type": "string"
+          },
+          "content": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SearchResponse": {
+        "type": "object",
+        "required": [
+          "searchParameters",
+          "results"
+        ],
+        "properties": {
+          "searchParameters": {
+            "$ref": "#/components/schemas/SearchParameters"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      },
+      "SearchBatchResponse": {
+        "type": "object",
+        "required": [
+          "results",
+          "summary"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "success",
+                "cost"
+              ],
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "data": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "cost": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "total",
+              "successful",
+              "failed",
+              "totalCost"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "successful": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "totalCost": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "NewsResponse": {
+        "type": "object",
+        "required": [
+          "searchParameters",
+          "results"
+        ],
+        "properties": {
+          "searchParameters": {
+            "$ref": "#/components/schemas/NewsParameters"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SearchResult"
+            }
+          },
+          "images": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      },
+      "NewsBatchResponse": {
+        "type": "object",
+        "required": [
+          "results",
+          "summary"
+        ],
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "success",
+                "cost"
+              ],
+              "properties": {
+                "success": {
+                  "type": "boolean"
+                },
+                "data": {
+                  "$ref": "#/components/schemas/NewsResponse"
+                },
+                "error": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "statusCode": {
+                      "type": "integer"
+                    }
+                  }
+                },
+                "cost": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "summary": {
+            "type": "object",
+            "required": [
+              "total",
+              "successful",
+              "failed",
+              "totalCost"
+            ],
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "successful": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "totalCost": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      },
+      "CrawlResult": {
+        "type": "object",
+        "required": [
+          "title",
+          "link",
+          "content"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "link": {
+            "type": "string",
+            "format": "uri"
+          },
+          "content": {
+            "type": "string"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": true
+      },
+      "CrawlResponse": {
+        "type": "object",
+        "required": [
+          "crawlParameters",
+          "results"
+        ],
+        "properties": {
+          "crawlParameters": {
+            "type": "object",
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "results": {
+            "$ref": "#/components/schemas/CrawlResult"
+          }
+        }
+      },
+      "SitemapResponse": {
+        "type": "object",
+        "required": [
+          "links"
+        ],
+        "properties": {
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      },
+      "TrendingResult": {
+        "type": "object",
+        "required": [
+          "title",
+          "url"
+        ],
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "description": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "TrendingResponse": {
+        "type": "object",
+        "required": [
+          "trendingParameters",
+          "results"
+        ],
+        "properties": {
+          "trendingParameters": {
+            "$ref": "#/components/schemas/TrendingRequest"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrendingResult"
+            }
+          }
+        }
+      },
+      "ExtractResponse": {
+        "type": "object",
+        "required": [
+          "success",
+          "extractParameters",
+          "results"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "extractParameters": {
+            "type": "object",
+            "required": [
+              "url"
+            ],
+            "properties": {
+              "url": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          },
+          "results": {}
+        }
+      },
+      "DeepcrawlAcceptedResponse": {
+        "type": "object",
+        "required": [
+          "taskId",
+          "status"
+        ],
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued"
+            ]
+          }
+        }
+      },
+      "DeepcrawlStatusResponse": {
+        "type": "object",
+        "required": [
+          "taskId"
+        ],
+        "properties": {
+          "taskId": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "waiting",
+              "processing",
+              "completed",
+              "failed",
+              "not_found"
+            ]
+          },
+          "success": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "r2Key": {
+            "type": "string"
+          },
+          "zipUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri"
+          }
+        },
+        "additionalProperties": true
+      },
+      "HealthResponse": {
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "properties": {
+          "status": {
+            "type": "string"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "version": {
+            "type": "string"
+          }
+        }
+      },
+      "UsageResponse": {
+        "type": "object",
+        "required": [
+          "usage",
+          "credential_type"
+        ],
+        "properties": {
+          "usage": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "user_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "credential_type": {
+            "type": "string",
+            "enum": [
+              "api_key",
+              "oauth"
+            ]
+          },
+          "client_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/screenshot": {
+      "post": {
+        "operationId": "screenshot",
+        "summary": "Render a web page as a PNG, JPEG, or WebP image",
+        "tags": [
+          "Screenshot"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.003000"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "maxLength": 4096
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "png",
+                      "jpeg",
+                      "webp"
+                    ],
+                    "default": "png"
+                  },
+                  "full_page": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "viewport": {
+                    "type": "object",
+                    "properties": {
+                      "width": {
+                        "type": "integer",
+                        "minimum": 320,
+                        "maximum": 2560,
+                        "default": 1440
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 200,
+                        "maximum": 1440,
+                        "default": 900
+                      },
+                      "device_scale_factor": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 2,
+                        "default": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "default": {
+                      "width": 1440,
+                      "height": 900,
+                      "device_scale_factor": 1
+                    }
+                  },
+                  "wait_until": {
+                    "type": "string",
+                    "enum": [
+                      "domcontentloaded",
+                      "load",
+                      "networkidle"
+                    ],
+                    "default": "load"
+                  },
+                  "wait_for_selector": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "selector": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "delay_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5000,
+                    "default": 0
+                  },
+                  "timeout_ms": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 30000,
+                    "default": 20000
+                  },
+                  "quality": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "omit_background": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "color_scheme": {
+                    "type": "string",
+                    "enum": [
+                      "light",
+                      "dark"
+                    ],
+                    "default": "light"
+                  },
+                  "animations": {
+                    "type": "string",
+                    "enum": [
+                      "disabled",
+                      "allow"
+                    ],
+                    "default": "disabled"
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "operationId": "search",
+        "summary": "Search the web using multiple search engines",
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/SearchResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/SearchBatchResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.003000"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "search_service": {
+                        "type": "string",
+                        "enum": [
+                          "google",
+                          "bing",
+                          "duckduckgo",
+                          "yahoo",
+                          "youtube",
+                          "x",
+                          "reddit",
+                          "github",
+                          "arxiv",
+                          "wechat",
+                          "bilibili",
+                          "imdb",
+                          "wikipedia",
+                          "",
+                          "sogou",
+                          "baidu",
+                          "360",
+                          "quark"
+                        ]
+                      },
+                      "max_results": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 50,
+                        "default": 5
+                      },
+                      "crawl_results": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 50,
+                        "default": 0
+                      },
+                      "image": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "include_sites": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "default": []
+                      },
+                      "exclude_sites": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "default": []
+                      },
+                      "language": {
+                        "type": "string"
+                      },
+                      "time_range": {
+                        "type": "string",
+                        "enum": [
+                          "day",
+                          "week",
+                          "month",
+                          "year",
+                          ""
+                        ]
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "query": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "search_service": {
+                          "type": "string",
+                          "enum": [
+                            "google",
+                            "bing",
+                            "duckduckgo",
+                            "yahoo",
+                            "youtube",
+                            "x",
+                            "reddit",
+                            "github",
+                            "arxiv",
+                            "wechat",
+                            "bilibili",
+                            "imdb",
+                            "wikipedia",
+                            "",
+                            "sogou",
+                            "baidu",
+                            "360",
+                            "quark"
+                          ]
+                        },
+                        "max_results": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 50,
+                          "default": 5
+                        },
+                        "crawl_results": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 50,
+                          "default": 0
+                        },
+                        "image": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "include_sites": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "default": []
+                        },
+                        "exclude_sites": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "default": []
+                        },
+                        "language": {
+                          "type": "string"
+                        },
+                        "time_range": {
+                          "type": "string",
+                          "enum": [
+                            "day",
+                            "week",
+                            "month",
+                            "year",
+                            ""
+                          ]
+                        }
+                      },
+                      "required": [
+                        "query"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/news": {
+      "post": {
+        "operationId": "news",
+        "summary": "Search news articles across multiple sources",
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/NewsResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NewsBatchResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.003000"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "query": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "search_service": {
+                        "type": "string",
+                        "enum": [
+                          "google",
+                          "bing",
+                          "duckduckgo",
+                          "yahoo",
+                          "hackernews",
+                          "",
+                          "reuters"
+                        ]
+                      },
+                      "max_results": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 50,
+                        "default": 5
+                      },
+                      "crawl_results": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 50,
+                        "default": 0
+                      },
+                      "image": {
+                        "type": "boolean",
+                        "default": false
+                      },
+                      "include_sites": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "default": []
+                      },
+                      "exclude_sites": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "default": []
+                      },
+                      "language": {
+                        "type": "string"
+                      },
+                      "time_range": {
+                        "type": "string",
+                        "enum": [
+                          "day",
+                          "week",
+                          "month",
+                          "year",
+                          ""
+                        ]
+                      }
+                    },
+                    "required": [
+                      "query"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "query": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "search_service": {
+                          "type": "string",
+                          "enum": [
+                            "google",
+                            "bing",
+                            "duckduckgo",
+                            "yahoo",
+                            "hackernews",
+                            "",
+                            "reuters"
+                          ]
+                        },
+                        "max_results": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 50,
+                          "default": 5
+                        },
+                        "crawl_results": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 50,
+                          "default": 0
+                        },
+                        "image": {
+                          "type": "boolean",
+                          "default": false
+                        },
+                        "include_sites": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "default": []
+                        },
+                        "exclude_sites": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "default": []
+                        },
+                        "language": {
+                          "type": "string"
+                        },
+                        "time_range": {
+                          "type": "string",
+                          "enum": [
+                            "day",
+                            "week",
+                            "month",
+                            "year",
+                            ""
+                          ]
+                        }
+                      },
+                      "required": [
+                        "query"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/crawl": {
+      "post": {
+        "operationId": "crawl",
+        "summary": "Crawl a URL and extract its content",
+        "tags": [
+          "Crawl"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/CrawlResponse"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CrawlResponse"
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.003000"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "url": {
+                        "type": "string",
+                        "format": "uri",
+                        "minLength": 1
+                      },
+                      "enableFallback": {
+                        "type": "boolean",
+                        "default": false
+                      }
+                    },
+                    "required": [
+                      "url"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "url": {
+                          "type": "string",
+                          "format": "uri",
+                          "minLength": 1
+                        },
+                        "enableFallback": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      },
+                      "required": [
+                        "url"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "minItems": 1
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sitemap": {
+      "post": {
+        "operationId": "sitemap",
+        "summary": "Extract sitemap URLs from a website",
+        "tags": [
+          "Crawl"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SitemapResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.003000"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "sitemap",
+                      "all"
+                    ]
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/trending": {
+      "post": {
+        "operationId": "trending",
+        "summary": "Get trending topics from various platforms",
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrendingResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.003000"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "search_service": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "max_results": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "required": [
+                  "search_service"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/extract": {
+      "post": {
+        "operationId": "extract",
+        "summary": "Extract structured content from a URL",
+        "tags": [
+          "Crawl"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.030000"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "prompt": {
+                    "type": "string"
+                  },
+                  "response_format": {
+                    "type": "object",
+                    "additionalProperties": {}
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deepcrawl": {
+      "post": {
+        "operationId": "deepcrawl",
+        "summary": "Deep crawl a website across multiple pages",
+        "tags": [
+          "Crawl"
+        ],
+        "responses": {
+          "202": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepcrawlAcceptedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.060000"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "sitemap",
+                      "all"
+                    ]
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
+    "/deepcrawl/status/{taskId}": {
+      "get": {
+        "operationId": "deepcrawlStatus",
+        "summary": "Check deepcrawl task status",
+        "tags": [
+          "Crawl"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeepcrawlStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "taskId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "Health check",
+        "tags": [
+          "System"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/usage": {
+      "get": {
+        "operationId": "usage",
+        "summary": "Get API key usage statistics",
+        "tags": [
+          "Account"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UsageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}
