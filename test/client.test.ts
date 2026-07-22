@@ -103,37 +103,6 @@ describe('Search1API TypeScript client', () => {
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 
-  it('returns screenshot bytes and metadata', async () => {
-    const fetch = vi.fn().mockResolvedValue(
-      new Response(new Uint8Array([1, 2, 3]), {
-        headers: {
-          'Content-Type': 'image/png',
-          ETag: 'image-etag',
-        },
-      })
-    );
-    const client = new Search1API({ apiKey: 'test-key', fetch });
-
-    const screenshot = await client.screenshot('https://example.com', {
-      fullPage: true,
-      viewport: { width: 1280, height: 720, deviceScaleFactor: 2 },
-    });
-
-    expect(Array.from(new Uint8Array(screenshot.data))).toEqual([1, 2, 3]);
-    expect(screenshot.contentType).toBe('image/png');
-    expect(screenshot.etag).toBe('image-etag');
-    const body = JSON.parse(String(fetch.mock.calls[0]?.[1]?.body));
-    expect(body).toMatchObject({
-      url: 'https://example.com',
-      full_page: true,
-      viewport: {
-        width: 1280,
-        height: 720,
-        device_scale_factor: 2,
-      },
-    });
-  });
-
   it('starts and polls a deepcrawl task', async () => {
     const fetch = vi
       .fn()
@@ -193,20 +162,25 @@ describe('Search1API TypeScript client', () => {
       .map((operation) => operation.operationId)
       .sort();
 
-    expect(operationIds).toEqual(
-      [
-        'crawl',
-        'deepcrawl',
-        'deepcrawlStatus',
-        'extract',
-        'health',
-        'news',
-        'screenshot',
-        'search',
-        'sitemap',
-        'trending',
-        'usage',
-      ].sort()
-    );
+    const operationMethods = {
+      crawl: 'crawl',
+      deepcrawl: 'startDeepcrawl',
+      deepcrawlStatus: 'getDeepcrawlStatus',
+      extract: 'extract',
+      health: 'health',
+      news: 'news',
+      search: 'search',
+      sitemap: 'sitemap',
+      trending: 'trending',
+      usage: 'usage',
+    } as const;
+
+    expect(operationIds).toEqual(Object.keys(operationMethods).sort());
+
+    const client = new Search1API({ apiKey: 'test-key' });
+    for (const method of Object.values(operationMethods)) {
+      expect(typeof client[method]).toBe('function');
+    }
+    expect(client).not.toHaveProperty('screenshot');
   });
 });

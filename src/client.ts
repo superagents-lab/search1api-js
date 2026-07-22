@@ -24,8 +24,6 @@ import type {
   NewsRequest,
   NewsResponse,
   RequestOptions,
-  ScreenshotOptions,
-  ScreenshotResponse,
   Search1APIOptions,
   SearchOptions,
   SearchRequest,
@@ -309,48 +307,6 @@ export class Search1API {
         response_format: options.responseFormat,
       }),
     });
-  }
-
-  async screenshot(
-    url: string,
-    options: ScreenshotOptions = {},
-    requestOptions: RequestOptions = {}
-  ): Promise<ScreenshotResponse> {
-    const response = await this.request('/screenshot', {
-      ...requestOptions,
-      method: 'POST',
-      body: compact({
-        url,
-        format: options.format,
-        full_page: options.fullPage,
-        viewport: options.viewport
-          ? compact({
-              width: options.viewport.width,
-              height: options.viewport.height,
-              device_scale_factor: options.viewport.deviceScaleFactor,
-            })
-          : undefined,
-        wait_until: options.waitUntil,
-        wait_for_selector: options.waitForSelector,
-        selector: options.selector,
-        delay_ms: options.delayMs,
-        timeout_ms: options.timeoutMs,
-        quality: options.quality,
-        omit_background: options.omitBackground,
-        color_scheme: options.colorScheme,
-        animations: options.animations,
-      }),
-    });
-
-    const contentLength = response.headers.get('content-length');
-    return {
-      data: await response.arrayBuffer(),
-      contentType:
-        response.headers.get('content-type')?.split(';')[0] ||
-        'application/octet-stream',
-      contentLength: contentLength ? Number(contentLength) : undefined,
-      etag: response.headers.get('etag') ?? undefined,
-    };
   }
 
   async startDeepcrawl(

@@ -4,9 +4,11 @@
 private Search1API service repository. It is checked in so generated types and
 SDK releases remain reproducible.
 
+The snapshot must be copied byte-for-byte from the canonical public contract;
+internal and discontinued endpoints are intentionally excluded.
+
 The deployed contract is available at:
 
 ```text
 https://api.search1api.com/openapi.json
 ```
-

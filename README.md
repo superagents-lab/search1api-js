@@ -53,8 +53,8 @@ application needs to control task persistence or polling itself.
 ## Other APIs
 
 The client also provides `news`, `crawl`, `sitemap`, `trending`, `extract`,
-`screenshot`, `usage`, and their batch or asynchronous variants where the HTTP
-API supports them.
+`usage`, and their batch or asynchronous variants where the HTTP API supports
+them.
 
 Requests time out after 30 seconds and retry `429` and transient `5xx`
 responses twice by default. Authentication, payment, and validation errors are
