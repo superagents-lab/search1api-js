@@ -11,6 +11,9 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    environment:
+      name: npm
+      url: https://www.npmjs.com/package/@search1api/client
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v6
