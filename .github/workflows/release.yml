@@ -1,0 +1,43 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: https://registry.npmjs.org
+          package-manager-cache: false
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run generate
+      - name: Verify generated files are current
+        run: git diff --exit-code
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - name: Verify release tag
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: >-
+          node -e "const { version } = require('./package.json');
+          if (process.env.RELEASE_TAG !== 'v' + version)
+          throw new Error('Release tag must be v' + version);"
+      - name: Publish package
+        run: |
+          PACKAGE_SPEC=$(node -p "const packageJson = require('./package.json'); packageJson.name + '@' + packageJson.version")
+          if npm view "$PACKAGE_SPEC" version >/dev/null 2>&1; then
+            echo "$PACKAGE_SPEC is already published"
+          else
+            npm publish
+          fi
