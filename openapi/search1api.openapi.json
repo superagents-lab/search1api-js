@@ -2,9 +2,9 @@
   "openapi": "3.1.0",
   "info": {
     "title": "Search1API",
-    "description": "Web search, news, crawling, and content extraction APIs for AI agents. Supports pay-per-request via MPP and x402 protocols.",
+    "description": "Web search, news, crawling, screenshot, and content extraction APIs for AI agents. Supports pay-per-request via MPP and x402 protocols.",
     "version": "1.0.0",
-    "x-guidance": "Search1API provides web search, news aggregation, URL crawling, sitemap extraction, trending topics, content extraction, and deep crawling. All paid endpoints accept POST with a JSON body. Use POST /search with a \"query\" field for web search. Use POST /news with a \"query\" field for news. Use POST /crawl with a \"url\" field to crawl a page. Use POST /sitemap with a \"url\" field to extract sitemap URLs. Use POST /trending with a \"search_service\" field for trends. Use POST /extract with a \"url\" field for structured content extraction. Use POST /deepcrawl with a \"url\" field for deep multi-page crawling."
+    "x-guidance": "Search1API provides web search, news aggregation, URL crawling, webpage screenshots, sitemap extraction, trending topics, content extraction, and deep crawling. All paid endpoints accept POST with a JSON body. Use POST /search with a \"query\" field for web search. Use POST /news with a \"query\" field for news. Use POST /crawl with a \"url\" field to crawl a page. Use POST /screenshot with a \"url\" field to render a PNG, JPEG, or WebP image. Use POST /sitemap with a \"url\" field to extract sitemap URLs. Use POST /trending with a \"search_service\" field for trends. Use POST /extract with a \"url\" field for structured content extraction. Use POST /deepcrawl with a \"url\" field for deep multi-page crawling."
   },
   "x-discovery": {
     "ownershipProofs": []
@@ -775,6 +775,261 @@
     }
   },
   "paths": {
+    "/screenshot": {
+      "post": {
+        "operationId": "screenshot",
+        "summary": "Render a web page as a PNG, JPEG, or WebP image",
+        "tags": [
+          "Screenshot"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/webp": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "Gateway Timeout",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "x-payment-info": {
+          "protocols": [
+            "mpp"
+          ],
+          "pricingMode": "fixed",
+          "price": "0.006"
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "maxLength": 4096
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "png",
+                      "jpeg",
+                      "webp"
+                    ],
+                    "default": "png"
+                  },
+                  "full_page": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "viewport": {
+                    "type": "object",
+                    "properties": {
+                      "width": {
+                        "type": "integer",
+                        "minimum": 320,
+                        "maximum": 2560,
+                        "default": 1440
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 200,
+                        "maximum": 1440,
+                        "default": 900
+                      },
+                      "device_scale_factor": {
+                        "type": "number",
+                        "minimum": 1,
+                        "maximum": 2,
+                        "default": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "default": {
+                      "width": 1440,
+                      "height": 900,
+                      "device_scale_factor": 1
+                    }
+                  },
+                  "wait_until": {
+                    "type": "string",
+                    "enum": [
+                      "domcontentloaded",
+                      "load",
+                      "networkidle"
+                    ],
+                    "default": "load"
+                  },
+                  "wait_for_selector": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "selector": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  "delay_ms": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 5000,
+                    "default": 0
+                  },
+                  "timeout_ms": {
+                    "type": "integer",
+                    "minimum": 1000,
+                    "maximum": 30000,
+                    "default": 20000
+                  },
+                  "quality": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100
+                  },
+                  "omit_background": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "color_scheme": {
+                    "type": "string",
+                    "enum": [
+                      "light",
+                      "dark"
+                    ],
+                    "default": "light"
+                  },
+                  "animations": {
+                    "type": "string",
+                    "enum": [
+                      "disabled",
+                      "allow"
+                    ],
+                    "default": "disabled"
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
     "/search": {
       "post": {
         "operationId": "search",

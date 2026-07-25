@@ -70,6 +70,44 @@ describe('Search1API TypeScript client', () => {
     });
   });
 
+  it('returns screenshot bytes and response metadata', async () => {
+    const image = new Uint8Array([137, 80, 78, 71]);
+    const fetch = vi.fn().mockResolvedValue(
+      new Response(image, {
+        headers: {
+          'Content-Type': 'image/png',
+          'X-Request-Id': 'req_screenshot_1',
+        },
+      })
+    );
+    const client = new Search1API({ apiKey: 'test-key', fetch });
+
+    const result = await client.screenshot('https://example.com', {
+      fullPage: true,
+      viewport: { width: 1280, height: 720, deviceScaleFactor: 2 },
+      waitUntil: 'networkidle',
+    });
+
+    expect(result).toEqual({
+      data: image,
+      contentType: 'image/png',
+      requestId: 'req_screenshot_1',
+    });
+    const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+    expect(url.toString()).toBe('https://api.search1api.com/screenshot');
+    expect(new Headers(init.headers).get('accept')).toBe('image/png');
+    expect(JSON.parse(String(init.body))).toEqual({
+      url: 'https://example.com',
+      full_page: true,
+      viewport: {
+        width: 1280,
+        height: 720,
+        device_scale_factor: 2,
+      },
+      wait_until: 'networkidle',
+    });
+  });
+
   it('does not retry authentication errors', async () => {
     const fetch = vi
       .fn()
@@ -170,6 +208,7 @@ describe('Search1API TypeScript client', () => {
       health: 'health',
       news: 'news',
       search: 'search',
+      screenshot: 'screenshot',
       sitemap: 'sitemap',
       trending: 'trending',
       usage: 'usage',
@@ -181,6 +220,5 @@ describe('Search1API TypeScript client', () => {
     for (const method of Object.values(operationMethods)) {
       expect(typeof client[method]).toBe('function');
     }
-    expect(client).not.toHaveProperty('screenshot');
   });
 });

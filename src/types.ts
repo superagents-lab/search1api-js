@@ -143,6 +143,39 @@ export interface CrawlResponse {
   results: CrawlResult;
 }
 
+export type ScreenshotFormat = 'png' | 'jpeg' | 'webp';
+export type ScreenshotWaitUntil =
+  | 'domcontentloaded'
+  | 'load'
+  | 'networkidle';
+
+export interface ScreenshotViewport {
+  width?: number;
+  height?: number;
+  deviceScaleFactor?: number;
+}
+
+export interface ScreenshotOptions {
+  format?: ScreenshotFormat;
+  fullPage?: boolean;
+  viewport?: ScreenshotViewport;
+  waitUntil?: ScreenshotWaitUntil;
+  waitForSelector?: string;
+  selector?: string;
+  delayMs?: number;
+  timeoutMs?: number;
+  quality?: number;
+  omitBackground?: boolean;
+  colorScheme?: 'light' | 'dark';
+  animations?: 'disabled' | 'allow';
+}
+
+export interface ScreenshotResponse {
+  data: Uint8Array;
+  contentType: string;
+  requestId?: string;
+}
+
 export interface SitemapOptions {
   type?: 'sitemap' | 'all';
 }
