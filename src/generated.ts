@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/screenshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Render a web page as a PNG, JPEG, or WebP image */
+        post: operations["screenshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/search": {
         parameters: {
             query?: never;
@@ -396,6 +413,162 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    screenshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uri */
+                    url: string;
+                    /**
+                     * @default png
+                     * @enum {string}
+                     */
+                    format?: "png" | "jpeg" | "webp";
+                    /** @default false */
+                    full_page?: boolean;
+                    /**
+                     * @default {
+                     *       "width": 1440,
+                     *       "height": 900,
+                     *       "device_scale_factor": 1
+                     *     }
+                     */
+                    viewport?: {
+                        /** @default 1440 */
+                        width?: number;
+                        /** @default 900 */
+                        height?: number;
+                        /** @default 1 */
+                        device_scale_factor?: number;
+                    };
+                    /**
+                     * @default load
+                     * @enum {string}
+                     */
+                    wait_until?: "domcontentloaded" | "load" | "networkidle";
+                    wait_for_selector?: string;
+                    selector?: string;
+                    /** @default 0 */
+                    delay_ms?: number;
+                    /** @default 20000 */
+                    timeout_ms?: number;
+                    quality?: number;
+                    /** @default false */
+                    omit_background?: boolean;
+                    /**
+                     * @default light
+                     * @enum {string}
+                     */
+                    color_scheme?: "light" | "dark";
+                    /**
+                     * @default disabled
+                     * @enum {string}
+                     */
+                    animations?: "disabled" | "allow";
+                };
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                    "image/jpeg": string;
+                    "image/webp": string;
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Payment Required */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Gateway Timeout */
+            504: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
     search: {
         parameters: {
             query?: never;

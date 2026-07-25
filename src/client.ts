@@ -28,6 +28,8 @@ import type {
   SearchOptions,
   SearchRequest,
   SearchResponse,
+  ScreenshotOptions,
+  ScreenshotResponse,
   SitemapOptions,
   SitemapResponse,
   TimeRange,
@@ -90,6 +92,30 @@ function newsBody(query: string, options: NewsOptions) {
     exclude_sites: options.excludeSites,
     language: options.language,
     time_range: options.timeRange,
+  });
+}
+
+function screenshotBody(url: string, options: ScreenshotOptions) {
+  return compact({
+    url,
+    format: options.format,
+    full_page: options.fullPage,
+    viewport: options.viewport
+      ? compact({
+          width: options.viewport.width,
+          height: options.viewport.height,
+          device_scale_factor: options.viewport.deviceScaleFactor,
+        })
+      : undefined,
+    wait_until: options.waitUntil,
+    wait_for_selector: options.waitForSelector,
+    selector: options.selector,
+    delay_ms: options.delayMs,
+    timeout_ms: options.timeoutMs,
+    quality: options.quality,
+    omit_background: options.omitBackground,
+    color_scheme: options.colorScheme,
+    animations: options.animations,
   });
 }
 
@@ -264,6 +290,28 @@ export class Search1API {
         compact({ url, enableFallback })
       ),
     });
+  }
+
+  async screenshot(
+    url: string,
+    options: ScreenshotOptions = {},
+    requestOptions: RequestOptions = {}
+  ): Promise<ScreenshotResponse> {
+    const response = await this.request('/screenshot', {
+      ...requestOptions,
+      method: 'POST',
+      headers: {
+        Accept: `image/${options.format || 'png'}`,
+        ...requestOptions.headers,
+      },
+      body: screenshotBody(url, options),
+    });
+    return {
+      data: new Uint8Array(await response.arrayBuffer()),
+      contentType:
+        response.headers.get('content-type') || `image/${options.format || 'png'}`,
+      requestId: response.headers.get('x-request-id') || undefined,
+    };
   }
 
   async sitemap(
@@ -467,7 +515,7 @@ export class Search1API {
     const headers = new Headers({
       Accept: 'application/json',
       Authorization: `Bearer ${this.apiKey}`,
-      'X-Search1API-Client': 'typescript/0.1.0',
+      'X-Search1API-Client': 'typescript/0.2.0',
       ...this.defaultHeaders,
       ...options.headers,
     });

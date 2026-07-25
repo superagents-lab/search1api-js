@@ -50,11 +50,26 @@ console.log(result.zipUrl);
 Use `startDeepcrawl`, `getDeepcrawlStatus`, and `waitForDeepcrawl` when the
 application needs to control task persistence or polling itself.
 
+## Screenshot
+
+Screenshot responses are binary image bytes rather than JSON:
+
+```ts
+import { writeFile } from 'node:fs/promises';
+
+const screenshot = await client.screenshot('https://example.com', {
+  format: 'png',
+  fullPage: true,
+});
+
+await writeFile('screenshot.png', screenshot.data);
+console.log(screenshot.contentType, screenshot.requestId);
+```
+
 ## Other APIs
 
 The client also provides `news`, `crawl`, `sitemap`, `trending`, `extract`,
-`usage`, and their batch or asynchronous variants where the HTTP API supports
-them.
+`usage`, and their batch variants where the HTTP API supports them.
 
 Requests time out after 30 seconds and retry `429` and transient `5xx`
 responses twice by default. Authentication, payment, and validation errors are

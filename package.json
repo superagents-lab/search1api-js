@@ -1,6 +1,6 @@
 {
   "name": "@search1api/client",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Official TypeScript client for Search1API",
   "license": "MIT",
   "type": "module",
