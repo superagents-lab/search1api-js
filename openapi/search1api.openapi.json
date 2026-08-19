@@ -229,7 +229,7 @@
           },
           "enableFallback": {
             "type": "boolean",
-            "default": false
+            "default": true
           }
         },
         "required": [
@@ -779,8 +779,23 @@
       "post": {
         "operationId": "screenshot",
         "summary": "Render a web page as a PNG, JPEG, or WebP image",
+        "description": "Render a public webpage as a PNG, JPEG, or WebP image. Use it when appearance is the point — layout checks, visual previews, or content that does not survive text extraction — and control the viewport, when the page counts as ready, and whether to capture the full document or a single element by CSS selector. When you want the page's text instead, call POST /crawl. Costs 2 credits per request.",
         "tags": [
           "Screenshot"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { writeFile } from 'node:fs/promises';\nimport { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst screenshot = await client.screenshot('https://example.com', {\n  format: 'png',\n  fullPage: true,\n});\n\nawait writeFile('screenshot.png', screenshot.data);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from pathlib import Path\nfrom search1api import Search1API\n\nclient = Search1API()\nscreenshot = client.screenshot(\n    \"https://example.com\",\n    format=\"png\",\n    full_page=True,\n)\n\nPath(\"screenshot.png\").write_bytes(screenshot[\"data\"])"
+          }
         ],
         "responses": {
           "200": {
@@ -830,6 +845,16 @@
             "description": "Payment Required",
             "content": {
               "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiError"
                 }
@@ -1024,6 +1049,46 @@
                   "url"
                 ],
                 "additionalProperties": false
+              },
+              "examples": {
+                "fullPage": {
+                  "summary": "Full-page PNG",
+                  "description": "Capture the complete document after the load event and a short stabilization delay.",
+                  "value": {
+                    "url": "https://s1.dev",
+                    "format": "png",
+                    "full_page": true,
+                    "wait_until": "load",
+                    "delay_ms": 1000,
+                    "timeout_ms": 30000
+                  }
+                },
+                "element": {
+                  "summary": "Page element as WebP",
+                  "description": "Wait for one visible element and return only that element as a compressed WebP image.",
+                  "value": {
+                    "url": "https://example.com",
+                    "format": "webp",
+                    "selector": "h1",
+                    "wait_for_selector": "h1",
+                    "quality": 85
+                  }
+                },
+                "darkViewport": {
+                  "summary": "Dark-mode viewport",
+                  "description": "Capture a high-density 1280 × 720 viewport with dark color-scheme emulation.",
+                  "value": {
+                    "url": "https://s1.dev",
+                    "format": "jpeg",
+                    "viewport": {
+                      "width": 1280,
+                      "height": 720,
+                      "device_scale_factor": 2
+                    },
+                    "color_scheme": "dark",
+                    "quality": 85
+                  }
+                }
               }
             }
           }
@@ -1034,8 +1099,23 @@
       "post": {
         "operationId": "search",
         "summary": "Search the web using multiple search engines",
+        "description": "Search the live public web when the answer depends on current information, sources, or research a model's training data cannot cover. Returns ranked results with id, title, URL, and snippet across 13+ engines, with optional images. Set `crawl_results` to pull the top N result pages in the same call — each crawled page is billed as an additional crawl — or pass a result URL to POST /crawl separately. Costs 1 credit per request.",
         "tags": [
           "Search"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst response = await client.search('latest AI agent frameworks', {\n  maxResults: 10,\n});\n\nconsole.log(response.results);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nresponse = client.search(\n    \"latest AI agent frameworks\",\n    max_results=10,\n)\n\nprint(response[\"results\"])"
+          }
         ],
         "responses": {
           "200": {
@@ -1079,16 +1159,6 @@
             "description": "Payment Required",
             "content": {
               "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiError"
                 }
@@ -1146,7 +1216,7 @@
             "mpp"
           ],
           "pricingMode": "fixed",
-          "price": "0.003000"
+          "price": "0.003"
         },
         "requestBody": {
           "required": true,
@@ -1327,8 +1397,23 @@
       "post": {
         "operationId": "news",
         "summary": "Search news articles across multiple sources",
+        "description": "Search recent news when the question is about events, announcements, or coverage rather than reference material. Returns articles from verified publishers with title, URL, snippet, and optional full page content, filterable by site, language, and time range. For questions that are not time-sensitive, prefer POST /search. Costs 1 credit per request.",
         "tags": [
           "Search"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst response = await client.news('latest AI industry news', {\n  maxResults: 10,\n});\n\nconsole.log(response.results);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nresponse = client.news(\n    \"latest AI industry news\",\n    max_results=10,\n)\n\nprint(response[\"results\"])"
+          }
         ],
         "responses": {
           "200": {
@@ -1372,16 +1457,6 @@
             "description": "Payment Required",
             "content": {
               "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiError"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiError"
                 }
@@ -1439,7 +1514,7 @@
             "mpp"
           ],
           "pricingMode": "fixed",
-          "price": "0.003000"
+          "price": "0.003"
         },
         "requestBody": {
           "required": true,
@@ -1598,8 +1673,23 @@
       "post": {
         "operationId": "crawl",
         "summary": "Crawl a URL and extract its content",
+        "description": "Fetch one public URL and return its readable title and body as clean text, with navigation, boilerplate, and scripts stripped. Use it on a URL the user supplied or one returned by POST /search. To ingest a whole site rather than a single page, use POST /deepcrawl. Costs 1 credit per request.",
         "tags": [
           "Crawl"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst response = await client.crawl('https://example.com');\n\nconsole.log(response);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nresponse = client.crawl(\"https://example.com\")\n\nprint(response)"
+          }
         ],
         "responses": {
           "200": {
@@ -1703,7 +1793,7 @@
             "mpp"
           ],
           "pricingMode": "fixed",
-          "price": "0.003000"
+          "price": "0.003"
         },
         "requestBody": {
           "required": true,
@@ -1721,7 +1811,7 @@
                       },
                       "enableFallback": {
                         "type": "boolean",
-                        "default": false
+                        "default": true
                       }
                     },
                     "required": [
@@ -1741,7 +1831,7 @@
                         },
                         "enableFallback": {
                           "type": "boolean",
-                          "default": false
+                          "default": true
                         }
                       },
                       "required": [
@@ -1762,8 +1852,23 @@
       "post": {
         "operationId": "sitemap",
         "summary": "Extract sitemap URLs from a website",
+        "description": "Discover the public URLs of a site when you need to know which pages exist before fetching any of them — scoping a crawl, auditing coverage, or locating a section. Returns the links discovered for the given page or domain; it does not fetch their content. Costs 1 credit per request.",
         "tags": [
           "Crawl"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst response = await client.sitemap('https://example.com');\n\nconsole.log(response);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nresponse = client.sitemap(\"https://example.com\")\n\nprint(response)"
+          }
         ],
         "responses": {
           "200": {
@@ -1857,7 +1962,7 @@
             "mpp"
           ],
           "pricingMode": "fixed",
-          "price": "0.003000"
+          "price": "0.003"
         },
         "requestBody": {
           "required": true,
@@ -1892,8 +1997,23 @@
       "post": {
         "operationId": "trending",
         "summary": "Get trending topics from various platforms",
+        "description": "List what is currently popular on a supported platform, such as GitHub repositories or Hacker News stories, when the user asks what is trending or new right now. This reads a platform's own live ranking rather than performing a query — for topic searches use POST /search. Costs 1 credit per request.",
         "tags": [
           "Search"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst response = await client.trending('github', {\n  maxResults: 10,\n});\n\nconsole.log(response);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nresponse = client.trending(\"github\", max_results=10)\n\nprint(response)"
+          }
         ],
         "responses": {
           "200": {
@@ -1987,7 +2107,7 @@
             "mpp"
           ],
           "pricingMode": "fixed",
-          "price": "0.003000"
+          "price": "0.003"
         },
         "requestBody": {
           "required": true,
@@ -2019,8 +2139,23 @@
       "post": {
         "operationId": "extract",
         "summary": "Extract structured content from a URL",
+        "description": "Pull structured data out of a single webpage using a natural-language prompt and a JSON schema you supply. Use it when you need specific fields — prices, specifications, contact details — rather than the whole document; when you want the full text, use POST /crawl. Costs 10 credits per request.",
         "tags": [
           "Crawl"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst response = await client.extract('https://example.com', {\n  prompt: 'Extract the page title and description.',\n});\n\nconsole.log(response);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nresponse = client.extract(\n    \"https://example.com\",\n    prompt=\"Extract the page title and description.\",\n)\n\nprint(response)"
+          }
         ],
         "responses": {
           "200": {
@@ -2114,7 +2249,7 @@
             "mpp"
           ],
           "pricingMode": "fixed",
-          "price": "0.030000"
+          "price": "0.03"
         },
         "requestBody": {
           "required": true,
@@ -2149,8 +2284,23 @@
       "post": {
         "operationId": "deepcrawl",
         "summary": "Deep crawl a website across multiple pages",
+        "description": "Start an asynchronous crawl of an entire site and package the pages as documents. Use it for whole-site ingestion; a single page is POST /crawl. The call returns a task id immediately rather than the result — poll GET /deepcrawl/status/{taskId} until the task reports completion. Costs 20 credits per request.",
         "tags": [
           "Crawl"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst task = await client.startDeepcrawl('https://example.com', {\n  type: 'all',\n});\n\nconsole.log(task.taskId);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\ntask = client.start_deepcrawl(\"https://example.com\", type=\"all\")\n\nprint(task[\"taskId\"])"
+          }
         ],
         "responses": {
           "202": {
@@ -2244,7 +2394,7 @@
             "mpp"
           ],
           "pricingMode": "fixed",
-          "price": "0.060000"
+          "price": "0.06"
         },
         "requestBody": {
           "required": true,
@@ -2279,8 +2429,23 @@
       "get": {
         "operationId": "deepcrawlStatus",
         "summary": "Check deepcrawl task status",
+        "description": "Poll a deepcrawl task started by POST /deepcrawl. Returns the task's current state and, once it finishes, where to retrieve the packaged result. Safe to call repeatedly. Free to call.",
         "tags": [
           "Crawl"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst status = await client.getDeepcrawlStatus('task_id');\n\nconsole.log(status);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nstatus = client.get_deepcrawl_status(\"task_id\")\n\nprint(status)"
+          }
         ],
         "responses": {
           "200": {
@@ -2356,8 +2521,23 @@
       "get": {
         "operationId": "health",
         "summary": "Health check",
+        "description": "Report whether the API is serving traffic. Takes no credentials, so use it for uptime and readiness checks — it will not tell you whether an API key is valid; call GET /usage for that. Free to call.",
         "tags": [
           "System"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst health = await client.health();\n\nconsole.log(health);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nhealth = client.health()\n\nprint(health)"
+          }
         ],
         "responses": {
           "200": {
@@ -2387,8 +2567,23 @@
       "get": {
         "operationId": "usage",
         "summary": "Get API key usage statistics",
+        "description": "Return the remaining credit balance for the authenticated account. Use it to check headroom before starting an expensive job such as a deepcrawl, or to confirm an API key works. Free to call.",
         "tags": [
           "Account"
+        ],
+        "x-codeSamples": [
+          {
+            "id": "js",
+            "lang": "ts",
+            "label": "TypeScript SDK",
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst usage = await client.usage('month');\n\nconsole.log(usage);"
+          },
+          {
+            "id": "python",
+            "lang": "python",
+            "label": "Python SDK",
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nusage = client.usage(\"month\")\n\nprint(usage)"
+          }
         ],
         "responses": {
           "200": {
