@@ -515,7 +515,7 @@ export class Search1API {
     const headers = new Headers({
       Accept: 'application/json',
       Authorization: `Bearer ${this.apiKey}`,
-      'X-Search1API-Client': 'typescript/0.2.0',
+      'X-Search1API-Client': 'typescript/0.2.1',
       ...this.defaultHeaders,
       ...options.headers,
     });

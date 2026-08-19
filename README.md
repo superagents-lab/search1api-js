@@ -3,7 +3,7 @@
 Official TypeScript client for Search1API. It supports Node.js 18+ and runtimes
 with a standards-compatible `fetch` implementation.
 
-API documentation: [search1api.com/docs](https://www.search1api.com/docs)
+API documentation: [search1api.com/docs](https://s1.dev/docs)
 
 ## Install
 

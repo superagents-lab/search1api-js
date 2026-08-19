@@ -13,7 +13,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Render a web page as a PNG, JPEG, or WebP image */
+        /**
+         * Render a web page as a PNG, JPEG, or WebP image
+         * @description Render a public webpage as a PNG, JPEG, or WebP image. Use it when appearance is the point — layout checks, visual previews, or content that does not survive text extraction — and control the viewport, when the page counts as ready, and whether to capture the full document or a single element by CSS selector. When you want the page's text instead, call POST /crawl. Costs 2 credits per request.
+         */
         post: operations["screenshot"];
         delete?: never;
         options?: never;
@@ -30,7 +33,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Search the web using multiple search engines */
+        /**
+         * Search the web using multiple search engines
+         * @description Search the live public web when the answer depends on current information, sources, or research a model's training data cannot cover. Returns ranked results with id, title, URL, and snippet across 13+ engines, with optional images. Set `crawl_results` to pull the top N result pages in the same call — each crawled page is billed as an additional crawl — or pass a result URL to POST /crawl separately. Costs 1 credit per request.
+         */
         post: operations["search"];
         delete?: never;
         options?: never;
@@ -47,7 +53,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Search news articles across multiple sources */
+        /**
+         * Search news articles across multiple sources
+         * @description Search recent news when the question is about events, announcements, or coverage rather than reference material. Returns articles from verified publishers with title, URL, snippet, and optional full page content, filterable by site, language, and time range. For questions that are not time-sensitive, prefer POST /search. Costs 1 credit per request.
+         */
         post: operations["news"];
         delete?: never;
         options?: never;
@@ -64,7 +73,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Crawl a URL and extract its content */
+        /**
+         * Crawl a URL and extract its content
+         * @description Fetch one public URL and return its readable title and body as clean text, with navigation, boilerplate, and scripts stripped. Use it on a URL the user supplied or one returned by POST /search. To ingest a whole site rather than a single page, use POST /deepcrawl. Costs 1 credit per request.
+         */
         post: operations["crawl"];
         delete?: never;
         options?: never;
@@ -81,7 +93,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Extract sitemap URLs from a website */
+        /**
+         * Extract sitemap URLs from a website
+         * @description Discover the public URLs of a site when you need to know which pages exist before fetching any of them — scoping a crawl, auditing coverage, or locating a section. Returns the links discovered for the given page or domain; it does not fetch their content. Costs 1 credit per request.
+         */
         post: operations["sitemap"];
         delete?: never;
         options?: never;
@@ -98,7 +113,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Get trending topics from various platforms */
+        /**
+         * Get trending topics from various platforms
+         * @description List what is currently popular on a supported platform, such as GitHub repositories or Hacker News stories, when the user asks what is trending or new right now. This reads a platform's own live ranking rather than performing a query — for topic searches use POST /search. Costs 1 credit per request.
+         */
         post: operations["trending"];
         delete?: never;
         options?: never;
@@ -115,7 +133,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Extract structured content from a URL */
+        /**
+         * Extract structured content from a URL
+         * @description Pull structured data out of a single webpage using a natural-language prompt and a JSON schema you supply. Use it when you need specific fields — prices, specifications, contact details — rather than the whole document; when you want the full text, use POST /crawl. Costs 10 credits per request.
+         */
         post: operations["extract"];
         delete?: never;
         options?: never;
@@ -132,7 +153,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Deep crawl a website across multiple pages */
+        /**
+         * Deep crawl a website across multiple pages
+         * @description Start an asynchronous crawl of an entire site and package the pages as documents. Use it for whole-site ingestion; a single page is POST /crawl. The call returns a task id immediately rather than the result — poll GET /deepcrawl/status/{taskId} until the task reports completion. Costs 20 credits per request.
+         */
         post: operations["deepcrawl"];
         delete?: never;
         options?: never;
@@ -147,7 +171,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Check deepcrawl task status */
+        /**
+         * Check deepcrawl task status
+         * @description Poll a deepcrawl task started by POST /deepcrawl. Returns the task's current state and, once it finishes, where to retrieve the packaged result. Safe to call repeatedly. Free to call.
+         */
         get: operations["deepcrawlStatus"];
         put?: never;
         post?: never;
@@ -164,7 +191,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health check */
+        /**
+         * Health check
+         * @description Report whether the API is serving traffic. Takes no credentials, so use it for uptime and readiness checks — it will not tell you whether an API key is valid; call GET /usage for that. Free to call.
+         */
         get: operations["health"];
         put?: never;
         post?: never;
@@ -181,7 +211,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get API key usage statistics */
+        /**
+         * Get API key usage statistics
+         * @description Return the remaining credit balance for the authenticated account. Use it to check headroom before starting an expensive job such as a deepcrawl, or to confirm an API key works. Free to call.
+         */
         get: operations["usage"];
         put?: never;
         post?: never;
@@ -253,7 +286,7 @@ export interface components {
         CrawlRequest: {
             /** Format: uri */
             url: string;
-            /** @default false */
+            /** @default true */
             enableFallback: boolean;
         };
         SitemapRequest: {
@@ -513,6 +546,15 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ApiError"];
                 };
             };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -652,15 +694,6 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ApiError"];
                 };
             };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiError"];
-                };
-            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -782,15 +815,6 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ApiError"];
                 };
             };
-            /** @description Not Found */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ApiError"];
-                };
-            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -841,12 +865,12 @@ export interface operations {
                 "application/json": {
                     /** Format: uri */
                     url: string;
-                    /** @default false */
+                    /** @default true */
                     enableFallback?: boolean;
                 } | {
                     /** Format: uri */
                     url: string;
-                    /** @default false */
+                    /** @default true */
                     enableFallback?: boolean;
                 }[];
             };

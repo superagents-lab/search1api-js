@@ -1,6 +1,6 @@
 {
   "name": "@search1api/client",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Official TypeScript client for Search1API",
   "license": "MIT",
   "type": "module",
@@ -26,7 +26,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "homepage": "https://www.search1api.com/docs/integrations/sdks",
+  "homepage": "https://s1.dev",
   "bugs": {
     "url": "https://github.com/superagents-lab/search1api-js/issues"
   },
