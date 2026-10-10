@@ -4,6 +4,26 @@
  */
 
 export interface paths {
+    "/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Report a Search1API problem or feature request
+         * @description Report a Search1API problem, missing capability, or confusing documentation encountered during a task. Only message is required. Optional request_id refers to the original problem request. Do not include credentials, personal data, or private user content. Reports are stored in Agentback and linked to an opaque account reference. Do not report every empty result or retry the same report automatically; feedback should not block the main task. Returns 201 only after storage succeeds. Maximum JSON body size: 16 KiB. Limited to 10 submissions per account per minute at a Cloudflare location. Free to call.
+         */
+        post: operations["feedback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/screenshot": {
         parameters: {
             query?: never;
@@ -35,7 +55,7 @@ export interface paths {
         put?: never;
         /**
          * Search the web using multiple search engines
-         * @description Search the live public web when the answer depends on current information, sources, or research a model's training data cannot cover. Returns ranked results with id, title, URL, and snippet across 13+ engines, with optional images. Set `crawl_results` to pull the top N result pages in the same call — each crawled page is billed as an additional crawl — or pass a result URL to POST /crawl separately. Costs 1 credit per request.
+         * @description Search the live public web when the answer depends on current information, sources, or research a model's training data cannot cover. Returns ranked results with id, title, URL, snippet, and `published_date` (ISO 8601, when the engine exposes one) across 13+ engines, with optional images. Set `crawl_results` to pull the top N result pages in the same call — each crawled page is billed as an additional crawl — or pass a result URL to POST /crawl separately. Costs 1 credit per request.
          */
         post: operations["search"];
         delete?: never;
@@ -55,9 +75,29 @@ export interface paths {
         put?: never;
         /**
          * Search news articles across multiple sources
-         * @description Search recent news when the question is about events, announcements, or coverage rather than reference material. Returns articles from verified publishers with title, URL, snippet, and optional full page content, filterable by site, language, and time range. For questions that are not time-sensitive, prefer POST /search. Costs 1 credit per request.
+         * @description Search recent news when the question is about events, announcements, or coverage rather than reference material. Returns articles from verified publishers with title, URL, snippet, `published_date` (ISO 8601, when known), and optional full page content, filterable by site, language, and time range. For questions that are not time-sensitive, prefer POST /search. Costs 1 credit per request.
          */
         post: operations["news"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ask": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search the engines a natural-language request calls for
+         * @description Agentic search. Describe what you are looking for in plain language and let a decision model (currently TypeSafe Jev) decide where to look. It picks up to five engines (web search, Hacker News, Reddit, GitHub, X, arXiv, Wikipedia, IMDb, WeChat, YouTube), rewrites the request into search keywords, infers a publication window from phrases such as "this week", searches the engines in parallel, and returns only the results judged relevant, merged and ranked, so agents read fewer off-topic results. The request takes only `query`; engines, keywords, and the window are always chosen by the model, and the response reports them in `intent`. Use POST /search instead when you already know the engine and keywords and want its raw ranking. Costs 5 credits per request.
+         */
+        post: operations["ask"];
         delete?: never;
         options?: never;
         head?: never;
@@ -75,7 +115,7 @@ export interface paths {
         put?: never;
         /**
          * Crawl a URL and extract its content
-         * @description Fetch one public URL and return its readable title and body as clean text, with navigation, boilerplate, and scripts stripped. Use it on a URL the user supplied or one returned by POST /search. To ingest a whole site rather than a single page, use POST /deepcrawl. Costs 1 credit per request.
+         * @description Fetch one public URL and return its readable title and body as clean text, with navigation, boilerplate, and scripts stripped. Use it on a URL the user supplied or one returned by POST /search. To ingest a whole site rather than a single page, use POST /deepcrawl. Send an array of request objects to crawl several URLs in one call: the response is an array containing only the URLs that succeeded, in no guaranteed order, so match items back to your input by `crawlParameters.url`; failed URLs are omitted and not charged. `enable_fallback` is accepted as a snake_case alias of `enableFallback`. Costs 1 credit per request.
          */
         post: operations["crawl"];
         delete?: never;
@@ -95,7 +135,7 @@ export interface paths {
         put?: never;
         /**
          * Extract sitemap URLs from a website
-         * @description Discover the public URLs of a site when you need to know which pages exist before fetching any of them — scoping a crawl, auditing coverage, or locating a section. Returns the links discovered for the given page or domain; it does not fetch their content. Costs 1 credit per request.
+         * @description Discover the public URLs of a site when you need to know which pages exist before fetching any of them — scoping a crawl, auditing coverage, or locating a section. With the default `type: "sitemap"` this reads the site's own sitemap: `Sitemap:` directives in robots.txt first, then the conventional paths, following sitemap index files and gzipped sitemaps, and returns the URLs it declares for the requested host. A site that publishes no sitemap falls back to the links found on the given page. Use `type: "all"` to skip the sitemap and get every link on that one page instead, including links to other hosts. Neither mode fetches page content. Costs 1 credit per request.
          */
         post: operations["sitemap"];
         delete?: never;
@@ -228,7 +268,7 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        /** @description Search1API error. Payment challenges may use RFC 9457 problem detail fields. */
+        /** @description Search1API error. Every JSON error carries `ok: false`, `error` (a short status-derived label) and `message` (human-readable detail); validation failures add `errors`. Payment challenges may use RFC 9457 problem detail fields. */
         ApiError: {
             /** @enum {boolean} */
             ok?: false;
@@ -250,9 +290,11 @@ export interface components {
         SearchParameters: {
             query: string;
             /** @enum {string} */
-            search_service?: "google" | "bing" | "duckduckgo" | "yahoo" | "youtube" | "x" | "reddit" | "github" | "arxiv" | "wechat" | "bilibili" | "imdb" | "wikipedia" | "" | "sogou" | "baidu" | "360" | "quark";
+            search_service?: "google" | "bing" | "bingcn" | "duckduckgo" | "yahoo" | "yandex" | "youtube" | "x" | "reddit" | "github" | "arxiv" | "wechat" | "bilibili" | "imdb" | "wikipedia" | "grokipedia" | "" | "baidu" | "360" | "quark";
             /** @default 5 */
             max_results: number;
+            /** @default 1 */
+            page: number;
             /** @default 0 */
             crawl_results: number;
             /** @default false */
@@ -319,6 +361,29 @@ export interface components {
             link: string;
             snippet: string;
             content?: string;
+            /**
+             * @description When the page was published, as ISO 8601: `YYYY-MM-DD` when only the day is known (web search engines), or `YYYY-MM-DDTHH:MM:SSZ` in UTC when the source carries a time (x, reddit, github, arxiv, youtube, bilibili, wechat, news feeds). Omitted when the source exposes no date, so treat it as optional per result.
+             * @example 2026-09-03
+             */
+            published_date?: string;
+            /**
+             * @description What a `github` result is: a repository, an issue, a pull request, or a discussion. Only present for `search_service: "github"`.
+             * @enum {string}
+             */
+            kind?: "repo" | "issue" | "pr" | "discussion";
+            /** @description Stargazer count of a `github` repository result (`kind: "repo"`). */
+            stars?: number;
+            /** @description Primary language of a `github` repository result (`kind: "repo"`). Omitted when GitHub reports none. */
+            language?: string;
+            /** @description Comment count on a `github` issue, pull request or discussion, or on a `hackernews` thread (POST /news). */
+            num_comments?: number;
+            /**
+             * Format: uri
+             * @description POST /news with `search_service: "hackernews"` only: the submitted article. `link` is the Hacker News discussion thread; `story_url` is empty for Ask HN / Show HN text posts.
+             */
+            story_url?: string;
+            /** @description POST /news with `search_service: "hackernews"` only: upvotes on the thread. */
+            points?: number;
         } & {
             [key: string]: unknown;
         };
@@ -365,6 +430,44 @@ export interface components {
                 failed: number;
                 totalCost: number;
             };
+        };
+        AskResult: {
+            title: string;
+            /** Format: uri */
+            link: string;
+            snippet: string;
+            /**
+             * @description When the page was published, as ISO 8601 (`YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SSZ`). Omitted when the engine exposes no date.
+             * @example 2026-09-03
+             */
+            published_date?: string;
+            /** @description Engine that returned the result. */
+            source: string;
+            /** @description How likely the result is to be about the query, two decimals. Only results scoring at least 0.5 are returned. */
+            relevance: number;
+        };
+        AskResponse: {
+            /** @description The query as sent. */
+            query: string;
+            /** @description How the request was interpreted and searched. */
+            intent: {
+                /** @description Keywords sent to the engines, with platform and time phrases removed. */
+                search_query: string;
+                /** @description Engines searched. */
+                sources: string[];
+                /**
+                 * @description Publication window applied, or null for none.
+                 * @enum {string|null}
+                 */
+                time_range: "day" | "week" | "month" | "year" | null;
+            };
+            /** @description Relevant results from every engine, best first, with duplicates merged. May be empty. */
+            results: components["schemas"]["AskResult"][];
+            /** @description Engines that failed while others completed. The request is still charged. */
+            errors: {
+                source: string;
+                message: string;
+            }[];
         };
         CrawlResult: {
             title: string;
@@ -437,6 +540,11 @@ export interface components {
             credential_type: "api_key" | "oauth";
             client_id?: string | null;
         };
+        FeedbackResponse: {
+            id: string;
+            /** @enum {string} */
+            status: "new";
+        };
     };
     responses: never;
     parameters: never;
@@ -446,6 +554,115 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    feedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    message: string;
+                    intent?: string;
+                    /**
+                     * @default other
+                     * @enum {string}
+                     */
+                    category?: "bug" | "feature_request" | "docs" | "other";
+                    request_id?: string;
+                    agent?: {
+                        name?: string;
+                        model?: string;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeedbackResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Payload Too Large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unsupported Media Type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
     screenshot: {
         parameters: {
             query?: never;
@@ -623,9 +840,11 @@ export interface operations {
                 "application/json": {
                     query: string;
                     /** @enum {string} */
-                    search_service?: "google" | "bing" | "duckduckgo" | "yahoo" | "youtube" | "x" | "reddit" | "github" | "arxiv" | "wechat" | "bilibili" | "imdb" | "wikipedia" | "" | "sogou" | "baidu" | "360" | "quark";
+                    search_service?: "google" | "bing" | "bingcn" | "duckduckgo" | "yahoo" | "yandex" | "youtube" | "x" | "reddit" | "github" | "arxiv" | "wechat" | "bilibili" | "imdb" | "wikipedia" | "grokipedia" | "" | "baidu" | "360" | "quark";
                     /** @default 5 */
                     max_results?: number;
+                    /** @default 1 */
+                    page?: number;
                     /** @default 0 */
                     crawl_results?: number;
                     /** @default false */
@@ -640,9 +859,11 @@ export interface operations {
                 } | {
                     query: string;
                     /** @enum {string} */
-                    search_service?: "google" | "bing" | "duckduckgo" | "yahoo" | "youtube" | "x" | "reddit" | "github" | "arxiv" | "wechat" | "bilibili" | "imdb" | "wikipedia" | "" | "sogou" | "baidu" | "360" | "quark";
+                    search_service?: "google" | "bing" | "bingcn" | "duckduckgo" | "yahoo" | "yandex" | "youtube" | "x" | "reddit" | "github" | "arxiv" | "wechat" | "bilibili" | "imdb" | "wikipedia" | "grokipedia" | "" | "baidu" | "360" | "quark";
                     /** @default 5 */
                     max_results?: number;
+                    /** @default 1 */
+                    page?: number;
                     /** @default 0 */
                     crawl_results?: number;
                     /** @default false */
@@ -853,6 +1074,87 @@ export interface operations {
             };
         };
     };
+    ask: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description What you are looking for, in natural language. Platform hints ("on Reddit", "papers") and time hints ("this week") steer engine and time-range selection. */
+                    query: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AskResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Payment Required */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
     crawl: {
         parameters: {
             query?: never;
@@ -910,6 +1212,24 @@ export interface operations {
                 };
                 content: {
                     "application/problem+json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
             /** @description Validation Error */

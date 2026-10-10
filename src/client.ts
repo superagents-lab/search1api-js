@@ -9,6 +9,7 @@ import {
 } from './errors.js';
 import type {
   ApiErrorBody,
+  AskResponse,
   BatchResponse,
   CrawlOptions,
   CrawlRequest,
@@ -18,6 +19,8 @@ import type {
   DeepcrawlStatusResponse,
   ExtractOptions,
   ExtractResponse,
+  FeedbackOptions,
+  FeedbackResponse,
   HealthResponse,
   JsonValue,
   NewsOptions,
@@ -41,6 +44,9 @@ import type {
 
 const DEFAULT_BASE_URL = 'https://api.search1api.com';
 const DEFAULT_TIMEOUT_MS = 30_000;
+// The gateway gives Ask up to 35 seconds, so the default 30 seconds would abort
+// requests the API would still answer.
+const DEFAULT_ASK_TIMEOUT_MS = 45_000;
 const DEFAULT_MAX_RETRIES = 2;
 const DEFAULT_RETRY_DELAY_MS = 500;
 const DEFAULT_DEEPCRAWL_POLL_INTERVAL_MS = 2_000;
@@ -72,6 +78,7 @@ function searchBody(query: string, options: SearchOptions) {
     query,
     search_service: options.searchService,
     max_results: options.maxResults,
+    page: options.page,
     crawl_results: options.crawlResults,
     image: options.image,
     include_sites: options.includeSites,
@@ -267,6 +274,23 @@ export class Search1API {
     });
   }
 
+  /**
+   * Agentic search: a decision model picks the engines and time window from a
+   * natural-language query and returns only relevant results. 5 credits per
+   * completed request; requires an API key or OAuth token.
+   */
+  async ask(
+    query: string,
+    requestOptions: RequestOptions = {}
+  ): Promise<AskResponse> {
+    return this.requestJson<AskResponse>('/ask', {
+      ...requestOptions,
+      timeoutMs: requestOptions.timeoutMs ?? DEFAULT_ASK_TIMEOUT_MS,
+      method: 'POST',
+      body: { query },
+    });
+  }
+
   async crawl(
     url: string,
     options: CrawlOptions = {},
@@ -436,6 +460,33 @@ export class Search1API {
     return this.requestJson<HealthResponse>('/health', requestOptions);
   }
 
+  /**
+   * Report a Search1API problem, missing capability, or confusing docs. Free.
+   * Never include credentials or personal data in the report.
+   */
+  async feedback(
+    message: string,
+    options: FeedbackOptions = {},
+    requestOptions: RequestOptions = {}
+  ): Promise<FeedbackResponse> {
+    return this.requestJson<FeedbackResponse>('/feedback', {
+      ...requestOptions,
+      // Feedback has no idempotency key; a retry after a lost response would
+      // file a duplicate report.
+      maxRetries: requestOptions.maxRetries ?? 0,
+      method: 'POST',
+      body: compact({
+        message,
+        intent: options.intent,
+        category: options.category,
+        request_id: options.requestId,
+        agent: options.agent
+          ? compact({ name: options.agent.name, model: options.agent.model })
+          : undefined,
+      }),
+    });
+  }
+
   private async requestJson<T>(
     path: string,
     options: InternalRequestOptions = {}
@@ -515,7 +566,7 @@ export class Search1API {
     const headers = new Headers({
       Accept: 'application/json',
       Authorization: `Bearer ${this.apiKey}`,
-      'X-Search1API-Client': 'typescript/0.2.1',
+      'X-Search1API-Client': 'typescript/0.3.0',
       ...this.defaultHeaders,
       ...options.headers,
     });

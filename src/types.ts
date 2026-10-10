@@ -9,8 +9,10 @@ export type TimeRange = 'day' | 'week' | 'month' | 'year';
 export type SearchEngine =
   | 'google'
   | 'bing'
+  | 'bingcn'
   | 'duckduckgo'
   | 'yahoo'
+  | 'yandex'
   | 'youtube'
   | 'x'
   | 'reddit'
@@ -20,7 +22,7 @@ export type SearchEngine =
   | 'bilibili'
   | 'imdb'
   | 'wikipedia'
-  | 'sogou'
+  | 'grokipedia'
   | 'baidu'
   | '360'
   | 'quark';
@@ -36,6 +38,8 @@ export type NewsEngine =
 export interface SearchOptions {
   searchService?: SearchEngine;
   maxResults?: number;
+  /** Native SERP page (1-100). Only `bing`, `bingcn`, `baidu`, and `grokipedia` paginate; other engines ignore it. */
+  page?: number;
   crawlResults?: number;
   image?: boolean;
   includeSites?: string[];
@@ -67,6 +71,7 @@ export interface SearchParameters {
   query: string;
   search_service?: SearchEngine;
   max_results: number;
+  page?: number;
   crawl_results: number;
   image: boolean;
   include_sites: string[];
@@ -76,7 +81,7 @@ export interface SearchParameters {
 }
 
 export interface NewsParameters
-  extends Omit<SearchParameters, 'search_service'> {
+  extends Omit<SearchParameters, 'search_service' | 'page'> {
   search_service?: NewsEngine;
 }
 
@@ -85,6 +90,20 @@ export interface SearchResult {
   link: string;
   snippet: string;
   content?: string;
+  /** ISO 8601 (`YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SSZ`); omitted when the source exposes no date. */
+  published_date?: string;
+  /** `github` results: what the result is. */
+  kind?: 'repo' | 'issue' | 'pr' | 'discussion';
+  /** `github` repository results. */
+  stars?: number;
+  /** `github` repository results: primary language. */
+  language?: string;
+  /** `github` threads and `hackernews` news results. */
+  num_comments?: number;
+  /** `hackernews` news results: upvotes on the thread. */
+  points?: number;
+  /** `hackernews` news results: the submitted article; `link` is the discussion thread. */
+  story_url?: string;
   [key: string]: unknown;
 }
 
@@ -98,6 +117,52 @@ export interface NewsResponse {
   searchParameters: NewsParameters;
   results: SearchResult[];
   images?: string[];
+}
+
+export interface AskIntent {
+  /** Keywords sent to the engines, with platform and time phrases removed. */
+  search_query: string;
+  /** Engines searched. */
+  sources: string[];
+  time_range: TimeRange | null;
+}
+
+export interface AskResult {
+  title: string;
+  link: string;
+  snippet: string;
+  published_date?: string;
+  /** Engine that returned the result. */
+  source: string;
+  /** Relevance to the query, 0.5-1 with two decimals. */
+  relevance: number;
+}
+
+export interface AskResponse {
+  query: string;
+  intent: AskIntent;
+  results: AskResult[];
+  /** Engines that failed while others completed. The request is still charged. */
+  errors: Array<{ source: string; message: string }>;
+}
+
+export type FeedbackCategory = 'bug' | 'feature_request' | 'docs' | 'other';
+
+export interface FeedbackOptions {
+  /** The task you were trying to complete. */
+  intent?: string;
+  category?: FeedbackCategory;
+  /** The original problem request's `x-search1api-request-id`, if available. */
+  requestId?: string;
+  agent?: {
+    name?: string;
+    model?: string;
+  };
+}
+
+export interface FeedbackResponse {
+  id: string;
+  status: 'new';
 }
 
 export interface BatchItem<T> {

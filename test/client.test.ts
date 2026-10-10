@@ -108,6 +108,86 @@ describe('Search1API TypeScript client', () => {
     });
   });
 
+  it('sends pagination and the new search engines', async () => {
+    const fetch = vi.fn(async (_url: URL | RequestInfo, _init?: RequestInit) =>
+      jsonResponse({ results: [] })
+    );
+    const client = new Search1API({ apiKey: 'test-key', fetch });
+
+    await client.search('kubernetes', { searchService: 'bingcn', page: 2 });
+    await client.search('Alan Turing', { searchService: 'grokipedia' });
+
+    expect(JSON.parse(String(fetch.mock.calls[0]![1]!.body))).toEqual({
+      query: 'kubernetes',
+      search_service: 'bingcn',
+      page: 2,
+    });
+    expect(JSON.parse(String(fetch.mock.calls[1]![1]!.body))).toEqual({
+      query: 'Alan Turing',
+      search_service: 'grokipedia',
+    });
+  });
+
+  it('sends only the query to ask with a longer default timeout', async () => {
+    const body = {
+      query: 'What are developers saying about Bun 1.3 this month?',
+      intent: {
+        search_query: 'Bun 1.3',
+        sources: ['reddit', 'hackernews'],
+        time_range: 'month',
+      },
+      results: [
+        {
+          title: 'Bun 1.3 thoughts',
+          link: 'https://news.ycombinator.com/item?id=1',
+          snippet: 'Discussion',
+          source: 'hackernews',
+          relevance: 0.91,
+        },
+      ],
+      errors: [],
+    };
+    const fetch = vi.fn().mockResolvedValue(jsonResponse(body));
+    const client = new Search1API({ apiKey: 'test-key', fetch });
+    const setTimeoutSpy = vi.spyOn(globalThis, 'setTimeout');
+
+    const result = await client.ask(body.query);
+
+    expect(result).toEqual(body);
+    const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+    expect(url.toString()).toBe('https://api.search1api.com/ask');
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(String(init.body))).toEqual({ query: body.query });
+    expect(setTimeoutSpy).toHaveBeenCalledWith(expect.any(Function), 45_000);
+    setTimeoutSpy.mockRestore();
+  });
+
+  it('submits feedback once without automatic retries', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ ok: false, message: 'Feedback unavailable' }, 503)
+      );
+    const client = new Search1API({ apiKey: 'test-key', fetch, maxRetries: 2 });
+
+    await expect(
+      client.feedback('Need publication dates', {
+        category: 'feature_request',
+        requestId: 'req_1',
+        agent: { name: 'codex' },
+      })
+    ).rejects.toThrow('Feedback unavailable');
+    expect(fetch).toHaveBeenCalledOnce();
+    const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+    expect(url.toString()).toBe('https://api.search1api.com/feedback');
+    expect(JSON.parse(String(init.body))).toEqual({
+      message: 'Need publication dates',
+      category: 'feature_request',
+      request_id: 'req_1',
+      agent: { name: 'codex' },
+    });
+  });
+
   it('does not retry authentication errors', async () => {
     const fetch = vi
       .fn()
@@ -201,10 +281,12 @@ describe('Search1API TypeScript client', () => {
       .sort();
 
     const operationMethods = {
+      ask: 'ask',
       crawl: 'crawl',
       deepcrawl: 'startDeepcrawl',
       deepcrawlStatus: 'getDeepcrawlStatus',
       extract: 'extract',
+      feedback: 'feedback',
       health: 'health',
       news: 'news',
       search: 'search',
