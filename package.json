@@ -1,6 +1,6 @@
 {
   "name": "@search1api/client",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Official TypeScript client for Search1API",
   "license": "MIT",
   "type": "module",
@@ -14,7 +14,10 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "sideEffects": false,
   "engines": {
     "node": ">=18"

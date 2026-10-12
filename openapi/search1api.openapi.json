@@ -348,6 +348,16 @@
             "description": "When the page was published, as ISO 8601: `YYYY-MM-DD` when only the day is known (web search engines), or `YYYY-MM-DDTHH:MM:SSZ` in UTC when the source carries a time (x, reddit, github, arxiv, youtube, bilibili, wechat, news feeds). Omitted when the source exposes no date, so treat it as optional per result.",
             "example": "2026-09-03"
           },
+          "metadata": {
+            "$ref": "#/components/schemas/SearchResultMetadata"
+          }
+        },
+        "additionalProperties": true
+      },
+      "SearchResultMetadata": {
+        "type": "object",
+        "description": "Optional engine-specific fields. Omitted when none apply. GitHub fields appear on POST /search; Hacker News fields appear on POST /news.",
+        "properties": {
           "kind": {
             "type": "string",
             "enum": [
@@ -360,11 +370,11 @@
           },
           "stars": {
             "type": "integer",
-            "description": "Stargazer count of a `github` repository result (`kind: \"repo\"`)."
+            "description": "Stargazer count of a `github` repository result (`metadata.kind: \"repo\"`)."
           },
           "language": {
             "type": "string",
-            "description": "Primary language of a `github` repository result (`kind: \"repo\"`). Omitted when GitHub reports none."
+            "description": "Primary language of a `github` repository result (`metadata.kind: \"repo\"`). Omitted when GitHub reports none."
           },
           "num_comments": {
             "type": "integer",
@@ -373,7 +383,7 @@
           "story_url": {
             "type": "string",
             "format": "uri",
-            "description": "POST /news with `search_service: \"hackernews\"` only: the submitted article. `link` is the Hacker News discussion thread; `story_url` is empty for Ask HN / Show HN text posts."
+            "description": "POST /news with `search_service: \"hackernews\"` only: the submitted article. `link` is the Hacker News discussion thread; `metadata.story_url` is omitted for Ask HN / Show HN text posts."
           },
           "points": {
             "type": "integer",
@@ -631,7 +641,7 @@
             "properties": {
               "search_query": {
                 "type": "string",
-                "description": "Keywords sent to the engines, with platform and time phrases removed."
+                "description": "Query sent to the first engine in `sources`. Each engine searches its own span of the request words, without platform names; the time window is applied as a filter."
               },
               "sources": {
                 "type": "array",
@@ -652,7 +662,7 @@
                   "year",
                   null
                 ],
-                "description": "Publication window applied, or null for none."
+                "description": "Publication window applied, or null for none. year means the past 365 days, not the current calendar year."
               }
             }
           },

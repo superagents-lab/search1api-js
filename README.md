@@ -36,7 +36,11 @@ The constructor reads `SEARCH1API_API_KEY` when `apiKey` is omitted.
 `bingcn`, `yandex`, `reddit`, `github`, `arxiv`, `wikipedia`, or `grokipedia`.
 `page` requests a later results page on engines with native pagination
 (`bing`, `bingcn`, `baidu`, `grokipedia`). Results carry `published_date` when the source
-exposes one.
+exposes one. Engine-specific fields are in each result's optional `metadata`:
+GitHub uses `metadata.kind`, `metadata.stars`, `metadata.language`, and
+`metadata.num_comments`; Hacker News news results use `metadata.story_url`,
+`metadata.points`, and `metadata.num_comments`. The former top-level paths
+are removed in 0.4.0; `published_date` stays at the top level.
 
 CommonJS projects can load the same client with `require`:
 

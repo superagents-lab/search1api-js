@@ -14,6 +14,25 @@ function jsonResponse(body: unknown, status = 200, headers = {}) {
 }
 
 describe('Search1API TypeScript client', () => {
+  it.each(['search', 'news'] as const)('preserves nested metadata from %s', async (method) => {
+    const body = {
+      searchParameters: { query: 'q' },
+      results: [{
+        title: 'Thread',
+        link: 'https://example.com/thread',
+        snippet: 'Discussion',
+        published_date: '2026-10-12',
+        metadata: { num_comments: 0 },
+      }],
+    };
+    const fetch = vi.fn().mockResolvedValue(jsonResponse(body));
+    const client = new Search1API({ apiKey: 'test-key', fetch });
+    const response = await client[method]('q');
+    expect(response).toEqual(body);
+    expect(response.results[0].metadata?.num_comments).toBe(0);
+    expect(response.results[0]).not.toHaveProperty('num_comments');
+  });
+
   it('requires an API key', () => {
     expect(() => new Search1API({ apiKey: '' })).toThrow(
       Search1APIConfigurationError
