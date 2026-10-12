@@ -366,20 +366,26 @@ export interface components {
              * @example 2026-09-03
              */
             published_date?: string;
+            metadata?: components["schemas"]["SearchResultMetadata"];
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description Optional engine-specific fields. Omitted when none apply. GitHub fields appear on POST /search; Hacker News fields appear on POST /news. */
+        SearchResultMetadata: {
             /**
              * @description What a `github` result is: a repository, an issue, a pull request, or a discussion. Only present for `search_service: "github"`.
              * @enum {string}
              */
             kind?: "repo" | "issue" | "pr" | "discussion";
-            /** @description Stargazer count of a `github` repository result (`kind: "repo"`). */
+            /** @description Stargazer count of a `github` repository result (`metadata.kind: "repo"`). */
             stars?: number;
-            /** @description Primary language of a `github` repository result (`kind: "repo"`). Omitted when GitHub reports none. */
+            /** @description Primary language of a `github` repository result (`metadata.kind: "repo"`). Omitted when GitHub reports none. */
             language?: string;
             /** @description Comment count on a `github` issue, pull request or discussion, or on a `hackernews` thread (POST /news). */
             num_comments?: number;
             /**
              * Format: uri
-             * @description POST /news with `search_service: "hackernews"` only: the submitted article. `link` is the Hacker News discussion thread; `story_url` is empty for Ask HN / Show HN text posts.
+             * @description POST /news with `search_service: "hackernews"` only: the submitted article. `link` is the Hacker News discussion thread; `metadata.story_url` is omitted for Ask HN / Show HN text posts.
              */
             story_url?: string;
             /** @description POST /news with `search_service: "hackernews"` only: upvotes on the thread. */
@@ -451,12 +457,12 @@ export interface components {
             query: string;
             /** @description How the request was interpreted and searched. */
             intent: {
-                /** @description Keywords sent to the engines, with platform and time phrases removed. */
+                /** @description Query sent to the first engine in `sources`. Each engine searches its own span of the request words, without platform names; the time window is applied as a filter. */
                 search_query: string;
                 /** @description Engines searched. */
                 sources: string[];
                 /**
-                 * @description Publication window applied, or null for none.
+                 * @description Publication window applied, or null for none. year means the past 365 days, not the current calendar year.
                  * @enum {string|null}
                  */
                 time_range: "day" | "week" | "month" | "year" | null;

@@ -85,6 +85,19 @@ export interface NewsParameters
   search_service?: NewsEngine;
 }
 
+export interface SearchResultMetadata {
+  /** GitHub: result type, repository stars/language, or thread comments. */
+  kind?: 'repo' | 'issue' | 'pr' | 'discussion';
+  stars?: number;
+  language?: string;
+  /** GitHub threads and Hacker News news results. */
+  num_comments?: number;
+  /** Hacker News: votes and submitted article URL; link is the discussion. */
+  points?: number;
+  story_url?: string;
+  [key: string]: unknown;
+}
+
 export interface SearchResult {
   title: string;
   link: string;
@@ -92,18 +105,7 @@ export interface SearchResult {
   content?: string;
   /** ISO 8601 (`YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SSZ`); omitted when the source exposes no date. */
   published_date?: string;
-  /** `github` results: what the result is. */
-  kind?: 'repo' | 'issue' | 'pr' | 'discussion';
-  /** `github` repository results. */
-  stars?: number;
-  /** `github` repository results: primary language. */
-  language?: string;
-  /** `github` threads and `hackernews` news results. */
-  num_comments?: number;
-  /** `hackernews` news results: upvotes on the thread. */
-  points?: number;
-  /** `hackernews` news results: the submitted article; `link` is the discussion thread. */
-  story_url?: string;
+  metadata?: SearchResultMetadata;
   [key: string]: unknown;
 }
 
