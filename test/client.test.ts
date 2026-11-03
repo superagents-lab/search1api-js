@@ -181,6 +181,49 @@ describe('Search1API TypeScript client', () => {
     setTimeoutSpy.mockRestore();
   });
 
+  it('sends maps options in snake_case', async () => {
+    const body = {
+      searchParameters: {
+        query: 'coffee shops',
+        country: 'us',
+        language: 'en',
+        location: { latitude: 40.7455, longitude: -74.0083, zoom: 15 },
+        page: 2,
+        max_results: 5,
+      },
+      results: [
+        {
+          position: 21,
+          name: 'Example Coffee',
+          place_id: 'ChIJ123',
+          maps_url:
+            'https://www.google.com/maps/search/?api=1&query=Example&query_place_id=ChIJ123',
+          rating: 4.6,
+          review_count: 822,
+          coordinates: { latitude: 40.72, longitude: -74.0 },
+        },
+      ],
+    };
+    const fetch = vi.fn().mockResolvedValue(jsonResponse(body));
+    const client = new Search1API({ apiKey: 'test-key', fetch });
+
+    const result = await client.maps('coffee shops', {
+      location: { latitude: 40.7455, longitude: -74.0083, zoom: 15 },
+      page: 2,
+      maxResults: 5,
+    });
+
+    expect(result).toEqual(body);
+    const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+    expect(url.toString()).toBe('https://api.search1api.com/maps');
+    expect(JSON.parse(String(init.body))).toEqual({
+      query: 'coffee shops',
+      location: { latitude: 40.7455, longitude: -74.0083, zoom: 15 },
+      page: 2,
+      max_results: 5,
+    });
+  });
+
   it('submits feedback once without automatic retries', async () => {
     const fetch = vi
       .fn()
@@ -307,6 +350,7 @@ describe('Search1API TypeScript client', () => {
       extract: 'extract',
       feedback: 'feedback',
       health: 'health',
+      maps: 'maps',
       news: 'news',
       search: 'search',
       screenshot: 'screenshot',

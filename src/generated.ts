@@ -4,6 +4,34 @@
  */
 
 export interface paths {
+    "/maps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Search Google Maps for local businesses and places
+         * @description Discover businesses and places with names, place IDs and public Maps links, plus addresses, contact details, ratings, review counts, coordinates and opening hours when available. Optional result fields are omitted when unavailable. Use POST /search for webpages and POST /crawl to read a business website.
+         *
+         *     Each request fetches one Google Maps page of up to 20 places. page is 1-based (1–6); page > 1 requires location coordinates. max_results only truncates that page and does not change the price or carry unused places into the next page. Send the same query, country, language and location with the next page number for another separately billed request. There is no automatic pagination, retry or filling from another engine. Results can change between requests; an empty or short page does not guarantee that no later results exist.
+         *
+         *     The response contains searchParameters and results, following the single-request format of POST /search and POST /news. searchParameters includes the requested page and normalized defaults. Result positions preserve native page order with possible gaps, not a stable SEO rank. A short or empty results array does not assert a total count or a next page.
+         *
+         *     A confirmed empty page is completed and charged. Technical failures return an error and release the credit reservation. GET /usage separately returns the remaining account balance.
+         *
+         *     Account credits only; no batch requests or payment protocols. Unknown fields are rejected; validation failures return 422 with errors entries containing field, message and code. Normal account limits apply (200 requests per minute). Set your client timeout above 20 seconds. SDK and MCP methods are not included in this release. Costs 3 credits per request.
+         */
+        post: operations["maps"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/feedback": {
         parameters: {
             query?: never;
@@ -307,6 +335,81 @@ export interface components {
             /** @enum {string} */
             time_range?: "day" | "week" | "month" | "year" | "";
         };
+        MapsResponse: {
+            searchParameters: {
+                /** @description Google Maps search phrase; leading and trailing whitespace is removed. */
+                query: string;
+                /**
+                 * @description Two-letter country code, normalized to lowercase. Defaults to us.
+                 * @default us
+                 */
+                country: string;
+                /**
+                 * @description Result language, for example en, de or zh-CN. Defaults to en.
+                 * @default en
+                 */
+                language: string;
+                /** @description Search origin coordinates and map zoom (default 14). Required for page > 1. Latitude must be -90 to 90, longitude -180 to 180, and zoom 3 to 30. Example: {"latitude":40.7455,"longitude":-74.0083,"zoom":15}. */
+                location?: {
+                    latitude: number;
+                    longitude: number;
+                    /** @default 14 */
+                    zoom: number;
+                };
+                /**
+                 * @description Page number, 1–6; default 1. Accepts an integer or canonical integer string such as "2". Empty strings use the default. Pages after the first require location.
+                 * @default 1
+                 */
+                page: number;
+                /**
+                 * @description Maximum places to return from this page, 1–20; default 20. Accepts an integer or canonical integer string such as "10". Empty strings use the default. Truncation does not reduce the page charge or carry places to the next page.
+                 * @default 20
+                 */
+                max_results: number;
+            };
+            results: {
+                /** @description Position in the requested native page, offset by earlier page capacities. Gaps can remain after filtering or deduplication; this is not a stable SEO rank. */
+                position: number;
+                /** @description Business or place name. */
+                name: string;
+                /** @description Google Maps place identifier, also used to deduplicate this page. */
+                place_id: string;
+                /**
+                 * Format: uri
+                 * @description Public Google Maps link for this place.
+                 */
+                maps_url: string;
+                address?: string;
+                phone?: string;
+                /** Format: uri */
+                website?: string;
+                /** Format: uri */
+                thumbnail?: string;
+                category?: string;
+                categories?: string[];
+                rating?: number;
+                review_count?: number;
+                coordinates?: {
+                    latitude: number;
+                    longitude: number;
+                };
+                /** @description Opening hours by weekday, as displayed by the source; omitted when unavailable. */
+                opening_hours?: {
+                    monday?: string;
+                    tuesday?: string;
+                    wednesday?: string;
+                    thursday?: string;
+                    friday?: string;
+                    saturday?: string;
+                    sunday?: string;
+                };
+                /** @description Source display text for the current opening state, not a normalized boolean. */
+                open_state?: string;
+                /** @description Source display text for the business price range, not a numeric amount or normalized currency. */
+                price?: string;
+                description?: string;
+            }[];
+        };
         NewsParameters: {
             query: string;
             /** @enum {string} */
@@ -370,7 +473,7 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        /** @description Optional engine-specific fields. Omitted when none apply. GitHub fields appear on POST /search; Hacker News fields appear on POST /news. */
+        /** @description Optional engine-specific fields. Omitted when none apply. GitHub and Reddit fields appear on POST /search; Hacker News fields appear on POST /news. */
         SearchResultMetadata: {
             /**
              * @description What a `github` result is: a repository, an issue, a pull request, or a discussion. Only present for `search_service: "github"`.
@@ -381,7 +484,7 @@ export interface components {
             stars?: number;
             /** @description Primary language of a `github` repository result (`metadata.kind: "repo"`). Omitted when GitHub reports none. */
             language?: string;
-            /** @description Comment count on a `github` issue, pull request or discussion, or on a `hackernews` thread (POST /news). */
+            /** @description Comment count on a `github` issue, pull request or discussion, on a `reddit` post, or on a `hackernews` thread (POST /news). */
             num_comments?: number;
             /**
              * Format: uri
@@ -560,6 +663,135 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    maps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * @description Google Maps search phrase; leading and trailing whitespace is removed.
+                     * @example coffee in Manhattan
+                     */
+                    query: string;
+                    /**
+                     * @description Two-letter country code, normalized to lowercase. Defaults to us.
+                     * @default us
+                     */
+                    country?: string;
+                    /**
+                     * @description Result language, for example en, de or zh-CN. Defaults to en.
+                     * @default en
+                     */
+                    language?: string;
+                    /** @description Search origin coordinates and map zoom (default 14). Required for page > 1. Latitude must be -90 to 90, longitude -180 to 180, and zoom 3 to 30. Example: {"latitude":40.7455,"longitude":-74.0083,"zoom":15}. */
+                    location?: {
+                        latitude: number;
+                        longitude: number;
+                        /** @default 14 */
+                        zoom?: number;
+                    };
+                    /**
+                     * @description Page number, 1–6; default 1. Accepts an integer or canonical integer string such as "2". Empty strings use the default. Pages after the first require location.
+                     * @default 1
+                     */
+                    page?: number;
+                    /**
+                     * @description Maximum places to return from this page, 1–20; default 20. Accepts an integer or canonical integer string such as "10". Empty strings use the default. Truncation does not reduce the page charge or carry places to the next page.
+                     * @default 20
+                     */
+                    max_results?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MapsResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Payment Required */
+            402: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Too Many Requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Internal Server Error */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Bad Gateway */
+            502: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Service Unavailable */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
     feedback: {
         parameters: {
             query?: never;
