@@ -23,6 +23,8 @@ import type {
   FeedbackResponse,
   HealthResponse,
   JsonValue,
+  MapsOptions,
+  MapsResponse,
   NewsOptions,
   NewsRequest,
   NewsResponse,
@@ -85,6 +87,17 @@ function searchBody(query: string, options: SearchOptions) {
     exclude_sites: options.excludeSites,
     language: options.language,
     time_range: options.timeRange,
+  });
+}
+
+function mapsBody(query: string, options: MapsOptions) {
+  return compact({
+    query,
+    country: options.country,
+    language: options.language,
+    location: options.location ? compact({ ...options.location }) : undefined,
+    page: options.page,
+    max_results: options.maxResults,
   });
 }
 
@@ -288,6 +301,23 @@ export class Search1API {
       timeoutMs: requestOptions.timeoutMs ?? DEFAULT_ASK_TIMEOUT_MS,
       method: 'POST',
       body: { query },
+    });
+  }
+
+  /**
+   * Google Maps place search: one page of up to 20 businesses and places with
+   * addresses, ratings, coordinates and opening hours when available. 3
+   * credits per completed page; requires an API key or OAuth token.
+   */
+  async maps(
+    query: string,
+    options: MapsOptions = {},
+    requestOptions: RequestOptions = {}
+  ): Promise<MapsResponse> {
+    return this.requestJson<MapsResponse>('/maps', {
+      ...requestOptions,
+      method: 'POST',
+      body: mapsBody(query, options),
     });
   }
 

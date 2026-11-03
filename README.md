@@ -69,6 +69,28 @@ A completed request costs 5 credits. Ask is not available with pay-per-request
 payments, and its default timeout is 45 seconds. Use `search` when you already
 know which engine and keywords you want.
 
+## Maps
+
+`maps` searches Google Maps and returns one page of up to 20 places. Each place
+has a name, place ID and Maps link, plus address, phone, website, rating,
+review count, coordinates and opening hours when available:
+
+```ts
+const places = await client.maps('coffee shops', {
+  location: { latitude: 40.7455, longitude: -74.0083, zoom: 15 },
+  maxResults: 10,
+});
+
+for (const place of places.results) {
+  console.log(place.name, place.rating, place.address);
+}
+```
+
+A completed page costs 3 credits, including a confirmed empty page.
+`maxResults` only trims the page and does not lower the price. Request `page`
+2-6 with the same query and `location` for more places; each page is billed
+separately. Maps is not available with pay-per-request payments.
+
 ## Deepcrawl
 
 `deepcrawl` starts a task and waits for it to finish:

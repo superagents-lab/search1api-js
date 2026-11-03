@@ -4,7 +4,7 @@
     "title": "Search1API",
     "description": "Web search, news, crawling, screenshot, and content extraction APIs for AI agents. Supports pay-per-request via MPP and x402 protocols.",
     "version": "1.0.0",
-    "x-guidance": "Search1API provides web search, news aggregation, URL crawling, webpage screenshots, sitemap extraction, trending topics, content extraction, and deep crawling. All paid endpoints accept POST with a JSON body. Use POST /search with a \"query\" field for web search. Use POST /news with a \"query\" field for news. Use POST /ask with a natural-language \"query\" to have Search1API choose the engines and time window and return only relevant results (API key only). Use POST /crawl with a \"url\" field to crawl a page. Use POST /screenshot with a \"url\" field to render a PNG, JPEG, or WebP image. Use POST /sitemap with a \"url\" field to extract sitemap URLs. Use POST /trending with a \"search_service\" field for trends. Use POST /extract with a \"url\" field for structured content extraction. Use POST /deepcrawl with a \"url\" field for deep multi-page crawling."
+    "x-guidance": "Search1API provides web search, Maps place discovery, news aggregation, URL crawling, webpage screenshots, sitemap extraction, trending topics, content extraction, and deep crawling. All paid endpoints accept POST with a JSON body. Use POST /search with a \"query\" field for web search. Use POST /maps with a \"query\" and optional location coordinates to discover Google Maps places (API key only). Use POST /news with a \"query\" field for news. Use POST /ask with a natural-language \"query\" to have Search1API choose the engines and time window and return only relevant results (API key only). Use POST /crawl with a \"url\" field to crawl a page. Use POST /screenshot with a \"url\" field to render a PNG, JPEG, or WebP image. Use POST /sitemap with a \"url\" field to extract sitemap URLs. Use POST /trending with a \"search_service\" field for trends. Use POST /extract with a \"url\" field for structured content extraction. Use POST /deepcrawl with a \"url\" field for deep multi-page crawling."
   },
   "x-discovery": {
     "ownershipProofs": []
@@ -156,6 +156,212 @@
         },
         "required": [
           "query"
+        ],
+        "additionalProperties": false
+      },
+      "MapsResponse": {
+        "type": "object",
+        "properties": {
+          "searchParameters": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 1000,
+                "description": "Google Maps search phrase; leading and trailing whitespace is removed."
+              },
+              "country": {
+                "type": "string",
+                "pattern": "^[a-zA-Z]{2}$",
+                "default": "us",
+                "description": "Two-letter country code, normalized to lowercase. Defaults to us."
+              },
+              "language": {
+                "type": "string",
+                "pattern": "^[a-z]{2,3}(-[a-zA-Z]{2,4})?$",
+                "default": "en",
+                "description": "Result language, for example en, de or zh-CN. Defaults to en."
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "zoom": {
+                    "type": "number",
+                    "minimum": 3,
+                    "maximum": 30,
+                    "default": 14
+                  }
+                },
+                "required": [
+                  "latitude",
+                  "longitude"
+                ],
+                "additionalProperties": false,
+                "description": "Search origin coordinates and map zoom (default 14). Required for page > 1. Latitude must be -90 to 90, longitude -180 to 180, and zoom 3 to 30. Example: {\"latitude\":40.7455,\"longitude\":-74.0083,\"zoom\":15}."
+              },
+              "page": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 6,
+                "default": 1,
+                "description": "Page number, 1–6; default 1. Accepts an integer or canonical integer string such as \"2\". Empty strings use the default. Pages after the first require location."
+              },
+              "max_results": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 20,
+                "default": 20,
+                "description": "Maximum places to return from this page, 1–20; default 20. Accepts an integer or canonical integer string such as \"10\". Empty strings use the default. Truncation does not reduce the page charge or carry places to the next page."
+              }
+            },
+            "required": [
+              "query"
+            ],
+            "additionalProperties": false
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "position": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "description": "Position in the requested native page, offset by earlier page capacities. Gaps can remain after filtering or deduplication; this is not a stable SEO rank."
+                },
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Business or place name."
+                },
+                "place_id": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Google Maps place identifier, also used to deduplicate this page."
+                },
+                "maps_url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Public Google Maps link for this place."
+                },
+                "address": {
+                  "type": "string"
+                },
+                "phone": {
+                  "type": "string"
+                },
+                "website": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "thumbnail": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "category": {
+                  "type": "string"
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "rating": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "review_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "coordinates": {
+                  "type": "object",
+                  "properties": {
+                    "latitude": {
+                      "type": "number",
+                      "minimum": -90,
+                      "maximum": 90
+                    },
+                    "longitude": {
+                      "type": "number",
+                      "minimum": -180,
+                      "maximum": 180
+                    }
+                  },
+                  "required": [
+                    "latitude",
+                    "longitude"
+                  ],
+                  "additionalProperties": false
+                },
+                "opening_hours": {
+                  "type": "object",
+                  "properties": {
+                    "monday": {
+                      "type": "string"
+                    },
+                    "tuesday": {
+                      "type": "string"
+                    },
+                    "wednesday": {
+                      "type": "string"
+                    },
+                    "thursday": {
+                      "type": "string"
+                    },
+                    "friday": {
+                      "type": "string"
+                    },
+                    "saturday": {
+                      "type": "string"
+                    },
+                    "sunday": {
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Opening hours by weekday, as displayed by the source; omitted when unavailable."
+                },
+                "open_state": {
+                  "type": "string",
+                  "description": "Source display text for the current opening state, not a normalized boolean."
+                },
+                "price": {
+                  "type": "string",
+                  "description": "Source display text for the business price range, not a numeric amount or normalized currency."
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "position",
+                "name",
+                "place_id",
+                "maps_url"
+              ],
+              "additionalProperties": false
+            },
+            "maxItems": 20
+          }
+        },
+        "required": [
+          "searchParameters",
+          "results"
         ],
         "additionalProperties": false
       },
@@ -356,7 +562,7 @@
       },
       "SearchResultMetadata": {
         "type": "object",
-        "description": "Optional engine-specific fields. Omitted when none apply. GitHub fields appear on POST /search; Hacker News fields appear on POST /news.",
+        "description": "Optional engine-specific fields. Omitted when none apply. GitHub and Reddit fields appear on POST /search; Hacker News fields appear on POST /news.",
         "properties": {
           "kind": {
             "type": "string",
@@ -378,7 +584,7 @@
           },
           "num_comments": {
             "type": "integer",
-            "description": "Comment count on a `github` issue, pull request or discussion, or on a `hackernews` thread (POST /news)."
+            "description": "Comment count on a `github` issue, pull request or discussion, on a `reddit` post, or on a `hackernews` thread (POST /news)."
           },
           "story_url": {
             "type": "string",
@@ -964,6 +1170,189 @@
     }
   },
   "paths": {
+    "/maps": {
+      "post": {
+        "operationId": "maps",
+        "summary": "Search Google Maps for local businesses and places",
+        "description": "Discover businesses and places with names, place IDs and public Maps links, plus addresses, contact details, ratings, review counts, coordinates and opening hours when available. Optional result fields are omitted when unavailable. Use POST /search for webpages and POST /crawl to read a business website.\n\nEach request fetches one Google Maps page of up to 20 places. page is 1-based (1–6); page > 1 requires location coordinates. max_results only truncates that page and does not change the price or carry unused places into the next page. Send the same query, country, language and location with the next page number for another separately billed request. There is no automatic pagination, retry or filling from another engine. Results can change between requests; an empty or short page does not guarantee that no later results exist.\n\nThe response contains searchParameters and results, following the single-request format of POST /search and POST /news. searchParameters includes the requested page and normalized defaults. Result positions preserve native page order with possible gaps, not a stable SEO rank. A short or empty results array does not assert a total count or a next page.\n\nA confirmed empty page is completed and charged. Technical failures return an error and release the credit reservation. GET /usage separately returns the remaining account balance.\n\nAccount credits only; no batch requests or payment protocols. Unknown fields are rejected; validation failures return 422 with errors entries containing field, message and code. Normal account limits apply (200 requests per minute). Set your client timeout above 20 seconds. SDK and MCP methods are not included in this release. Costs 3 credits per request.",
+        "tags": [
+          "Maps"
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MapsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 1000,
+                    "description": "Google Maps search phrase; leading and trailing whitespace is removed.",
+                    "example": "coffee in Manhattan"
+                  },
+                  "country": {
+                    "type": "string",
+                    "pattern": "^[a-zA-Z]{2}$",
+                    "default": "us",
+                    "description": "Two-letter country code, normalized to lowercase. Defaults to us."
+                  },
+                  "language": {
+                    "type": "string",
+                    "pattern": "^[a-z]{2,3}(-[a-zA-Z]{2,4})?$",
+                    "default": "en",
+                    "description": "Result language, for example en, de or zh-CN. Defaults to en."
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "latitude": {
+                        "type": "number",
+                        "minimum": -90,
+                        "maximum": 90
+                      },
+                      "longitude": {
+                        "type": "number",
+                        "minimum": -180,
+                        "maximum": 180
+                      },
+                      "zoom": {
+                        "type": "number",
+                        "minimum": 3,
+                        "maximum": 30,
+                        "default": 14
+                      }
+                    },
+                    "required": [
+                      "latitude",
+                      "longitude"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Search origin coordinates and map zoom (default 14). Required for page > 1. Latitude must be -90 to 90, longitude -180 to 180, and zoom 3 to 30. Example: {\"latitude\":40.7455,\"longitude\":-74.0083,\"zoom\":15}."
+                  },
+                  "page": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 6,
+                    "default": 1,
+                    "description": "Page number, 1–6; default 1. Accepts an integer or canonical integer string such as \"2\". Empty strings use the default. Pages after the first require location."
+                  },
+                  "max_results": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "default": 20,
+                    "description": "Maximum places to return from this page, 1–20; default 20. Accepts an integer or canonical integer string such as \"10\". Empty strings use the default. Truncation does not reduce the page charge or carry places to the next page."
+                  }
+                },
+                "required": [
+                  "query"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        }
+      }
+    },
     "/feedback": {
       "post": {
         "operationId": "feedback",
@@ -1749,7 +2138,8 @@
                       ],
                       "additionalProperties": false
                     },
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 50
                   }
                 ]
               }
@@ -2025,7 +2415,8 @@
                       ],
                       "additionalProperties": false
                     },
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 50
                   }
                 ]
               }
@@ -2342,7 +2733,8 @@
                       ],
                       "additionalProperties": false
                     },
-                    "minItems": 1
+                    "minItems": 1,
+                    "maxItems": 50
                   }
                 ]
               }
