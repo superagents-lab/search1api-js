@@ -5,6 +5,12 @@ import {
   Search1API,
   Search1APIConfigurationError,
 } from '../src/index.js';
+import type {
+  DeepcrawlPage,
+  DeepcrawlStats,
+  DeepcrawlStatusResponse,
+  OpenAPIComponents,
+} from '../src/index.js';
 
 function jsonResponse(body: unknown, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -310,6 +316,97 @@ describe('Search1API TypeScript client', () => {
 
     expect(result.success).toBe(true);
     expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it('maps deepcrawl scope and format options to the API request', async () => {
+    const completed = {
+      taskId: 'task_2',
+      status: 'completed',
+      success: true,
+      format: 'json',
+      stats: {
+        discovered: 120,
+        matched: 30,
+        skipped: 10,
+        crawled: 19,
+        failed: 1,
+      },
+      failed: [{ url: 'https://example.com/docs/broken', error: 'HTTP 404' }],
+      resultUrl: 'https://example.com/result.json',
+      pages: [
+        {
+          url: 'https://example.com/docs/intro',
+          title: 'Intro',
+          content: '# Intro',
+        },
+        { url: 'https://example.com/docs/untitled', title: null, content: '' },
+      ],
+    };
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(
+        jsonResponse({ taskId: 'task_2', status: 'queued' }, 202)
+      )
+      .mockResolvedValueOnce(jsonResponse(completed));
+    const client = new Search1API({ apiKey: 'test-key', fetch });
+
+    const result: DeepcrawlStatusResponse = await client.deepcrawl(
+      'https://example.com/docs/',
+      {
+        type: 'sitemap',
+        maxPages: 20,
+        includePaths: ['/docs', '/guides/*'],
+        excludePaths: ['/docs/changelog'],
+        format: 'json',
+      },
+      { pollIntervalMs: 0, timeoutMs: 100 }
+    );
+
+    const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+    expect(url.toString()).toBe('https://api.search1api.com/deepcrawl');
+    const body = JSON.parse(String(init.body));
+    expect(body).toEqual({
+      url: 'https://example.com/docs/',
+      type: 'sitemap',
+      max_pages: 20,
+      include_paths: ['/docs', '/guides/*'],
+      exclude_paths: ['/docs/changelog'],
+      format: 'json',
+    });
+    const wireBody: OpenAPIComponents['schemas']['DeepcrawlRequest'] = body;
+    expect(wireBody.max_pages).toBe(20);
+    expect(String(fetch.mock.calls[1][0])).toBe(
+      'https://api.search1api.com/deepcrawl/status/task_2'
+    );
+
+    expect(result).toEqual(completed);
+    expect(result.format).toBe('json');
+    const stats: DeepcrawlStats | undefined = result.stats;
+    expect(stats?.skipped).toBe(10);
+    expect(result.failed?.[0]).toEqual({
+      url: 'https://example.com/docs/broken',
+      error: 'HTTP 404',
+    });
+    expect(result.resultUrl).toBe('https://example.com/result.json');
+    const pages: DeepcrawlPage[] = result.pages ?? [];
+    expect(pages.map((page) => page.title)).toEqual(['Intro', null]);
+    expect(pages[0].content).toBe('# Intro');
+  });
+
+  it('sends only the url when no deepcrawl options are given', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(
+        jsonResponse({ taskId: 'task_3', status: 'queued' }, 202)
+      );
+    const client = new Search1API({ apiKey: 'test-key', fetch });
+
+    await client.startDeepcrawl('https://example.com');
+
+    const [, init] = fetch.mock.calls[0] as [URL, RequestInit];
+    expect(JSON.parse(String(init.body))).toEqual({
+      url: 'https://example.com',
+    });
   });
 
   it('does not retry deepcrawl task creation by default', async () => {
