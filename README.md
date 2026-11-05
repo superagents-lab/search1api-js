@@ -100,6 +100,30 @@ const result = await client.deepcrawl('https://example.com', { type: 'all' });
 console.log(result.zipUrl);
 ```
 
+`maxPages` (1-1000, default 1000) caps the crawl after the path rules.
+`includePaths` and `excludePaths` take up to 20 rules each, matched against
+the URL path: a rule without `*` is a path prefix (`/docs` matches `/docs/api`
+but not `/docsearch`), a rule with `*` must match the whole path, and exclusion
+wins. `format: 'json'` returns the pages in the completed status response
+instead of a ZIP:
+
+```ts
+const result = await client.deepcrawl('https://hono.dev/docs/', {
+  maxPages: 20,
+  includePaths: ['/docs/'],
+  excludePaths: ['/docs/changelog'],
+  format: 'json',
+});
+
+for (const page of result.pages ?? []) {
+  console.log(page.url, page.title, page.content.length);
+}
+console.log(result.stats, result.failed);
+```
+
+`pages` is omitted when the result is larger than 5 MB; download `resultUrl`
+instead. A task costs 20 credits regardless of the page count.
+
 Use `startDeepcrawl`, `getDeepcrawlStatus`, and `waitForDeepcrawl` when the
 application needs to control task persistence or polling itself.
 

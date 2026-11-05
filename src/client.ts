@@ -115,6 +115,17 @@ function newsBody(query: string, options: NewsOptions) {
   });
 }
 
+function deepcrawlBody(url: string, options: DeepcrawlOptions) {
+  return compact({
+    url,
+    type: options.type,
+    max_pages: options.maxPages,
+    include_paths: options.includePaths,
+    exclude_paths: options.excludePaths,
+    format: options.format,
+  });
+}
+
 function screenshotBody(url: string, options: ScreenshotOptions) {
   return compact({
     url,
@@ -422,7 +433,7 @@ export class Search1API {
       // enqueue and charge a duplicate crawl.
       maxRetries: requestOptions.maxRetries ?? 0,
       method: 'POST',
-      body: compact({ url, type: options.type }),
+      body: deepcrawlBody(url, options),
     });
   }
 

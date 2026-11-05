@@ -348,8 +348,23 @@ export interface ExtractResponse<T = JsonValue> {
   results: T;
 }
 
+export type DeepcrawlFormat = 'zip' | 'json';
+
 export interface DeepcrawlOptions {
   type?: 'sitemap' | 'all';
+  /** Pages to crawl, 1-1000. The API defaults to 1000. Applied after the path rules, in discovery order. */
+  maxPages?: number;
+  /**
+   * Only crawl URLs whose path matches one of these rules (up to 20, each 1-200
+   * characters). A rule without `*` is a path prefix on segment boundaries:
+   * `/docs` matches `/docs/api` but not `/docsearch`. A rule with `*` must match
+   * the whole path, and `*` matches any characters including `/`.
+   */
+  includePaths?: string[];
+  /** Skip URLs whose path matches one of these rules, same syntax as `includePaths`. Exclusion wins. */
+  excludePaths?: string[];
+  /** `zip` (the API default) returns `zipUrl`; `json` returns `pages` and `resultUrl`. */
+  format?: DeepcrawlFormat;
 }
 
 export interface DeepcrawlAcceptedResponse {
@@ -365,6 +380,29 @@ export type DeepcrawlStatus =
   | 'failed'
   | 'not_found';
 
+export interface DeepcrawlStats {
+  /** Links found on the site. */
+  discovered: number;
+  /** Links that passed `includePaths` / `excludePaths`. */
+  matched: number;
+  /** Matched links left out by `maxPages`. */
+  skipped: number;
+  crawled: number;
+  failed: number;
+}
+
+export interface DeepcrawlFailedPage {
+  url: string;
+  error: string;
+}
+
+export interface DeepcrawlPage {
+  url: string;
+  title: string | null;
+  /** Page body as Markdown. */
+  content: string;
+}
+
 export interface DeepcrawlStatusResponse {
   taskId: string;
   status?: DeepcrawlStatus | string;
@@ -372,7 +410,17 @@ export interface DeepcrawlStatusResponse {
   message?: string;
   error?: string | null;
   r2Key?: string;
+  /** `format: 'zip'` result. */
   zipUrl?: string | null;
+  format?: DeepcrawlFormat;
+  /** Page counts once the task has finished. */
+  stats?: DeepcrawlStats;
+  /** Pages that could not be crawled. */
+  failed?: DeepcrawlFailedPage[];
+  /** `format: 'json'` only: URL of the JSON file `{ pages, failed }`. */
+  resultUrl?: string | null;
+  /** `format: 'json'` only, in discovery order. Omitted when the result exceeds 5 MB; download `resultUrl` instead. */
+  pages?: DeepcrawlPage[];
   [key: string]: unknown;
 }
 

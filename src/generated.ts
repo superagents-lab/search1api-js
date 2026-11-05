@@ -223,7 +223,7 @@ export interface paths {
         put?: never;
         /**
          * Deep crawl a website across multiple pages
-         * @description Start an asynchronous crawl of an entire site and package the pages as documents. Use it for whole-site ingestion; a single page is POST /crawl. The call returns a task id immediately rather than the result — poll GET /deepcrawl/status/{taskId} until the task reports completion. Costs 20 credits per request.
+         * @description Start an asynchronous crawl of an entire site and package the pages as documents. Use it for whole-site ingestion; a single page is POST /crawl. Narrow the crawl with include_paths/exclude_paths and cap it with max_pages; a task costs the same regardless of page count. Set format to "json" to get the pages inline in the status response instead of a ZIP. The call returns a task id immediately rather than the result — poll GET /deepcrawl/status/{taskId} until the task reports completion. Costs 20 credits per request.
          */
         post: operations["deepcrawl"];
         delete?: never;
@@ -241,7 +241,7 @@ export interface paths {
         };
         /**
          * Check deepcrawl task status
-         * @description Poll a deepcrawl task started by POST /deepcrawl. Returns the task's current state and, once it finishes, where to retrieve the packaged result. Safe to call repeatedly. Free to call.
+         * @description Poll a deepcrawl task started by POST /deepcrawl. Returns the task's current state and, once it finishes, page counts (stats), failed URLs, and the result: zipUrl for format=zip, or the pages inline plus resultUrl for format=json. Safe to call repeatedly. Free to call.
          */
         get: operations["deepcrawlStatus"];
         put?: never;
@@ -312,6 +312,10 @@ export interface components {
             title?: string;
             status?: number;
             detail?: string;
+            /** @description `/crawl` and `/extract`: why the page could not be read, e.g. `NOT_FOUND`, `GONE`, `FORBIDDEN`, `AUTH_REQUIRED`, `BLOCKED`, `RATE_LIMITED`, `DNS_NOT_FOUND`, `TARGET_UNREACHABLE`, `TIMEOUT`, `QUALITY_CHECK`. */
+            failureCategory?: string;
+            /** @description `/crawl` and `/extract`: the HTTP status the target site itself returned, when it answered. */
+            upstreamStatus?: number;
         } & {
             [key: string]: unknown;
         };
@@ -457,6 +461,17 @@ export interface components {
             url: string;
             /** @enum {string} */
             type?: "sitemap" | "all";
+            /** @description Maximum number of pages to crawl, 1–1000; default 1000. Applied after include_paths/exclude_paths, in discovery order. */
+            max_pages?: number;
+            /** @description Only crawl URLs whose path matches one of these rules (up to 20). A rule without * is a path prefix on segment boundaries: "/docs" matches /docs and /docs/api but not /docsearch. A rule with * must match the whole path, and * matches any characters including /, e.g. "/blog/*". Empty or omitted means every discovered URL. */
+            include_paths?: string[];
+            /** @description Skip URLs whose path matches one of these rules (up to 20), using the same syntax as include_paths. Exclusion wins over inclusion. */
+            exclude_paths?: string[];
+            /**
+             * @description Result format; default "zip". "zip" packages the pages as Markdown files behind zipUrl. "json" returns pages: [{url, title, content}] in the completed status response, plus resultUrl for the same JSON file.
+             * @enum {string}
+             */
+            format?: "zip" | "json";
         };
         SearchResult: {
             title: string;
@@ -473,7 +488,7 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        /** @description Optional engine-specific fields. Omitted when none apply. GitHub and Reddit fields appear on POST /search; Hacker News fields appear on POST /news. */
+        /** @description Optional engine-specific fields. Omitted when none apply. GitHub, Reddit and X fields appear on POST /search; Hacker News fields appear on POST /news. */
         SearchResultMetadata: {
             /**
              * @description What a `github` result is: a repository, an issue, a pull request, or a discussion. Only present for `search_service: "github"`.
@@ -482,9 +497,9 @@ export interface components {
             kind?: "repo" | "issue" | "pr" | "discussion";
             /** @description Stargazer count of a `github` repository result (`metadata.kind: "repo"`). */
             stars?: number;
-            /** @description Primary language of a `github` repository result (`metadata.kind: "repo"`). Omitted when GitHub reports none. */
+            /** @description Primary language of a `github` repository result (`metadata.kind: "repo"`), or the language code X detected for an `x` post. Omitted when none is reported. */
             language?: string;
-            /** @description Comment count on a `github` issue, pull request or discussion, on a `reddit` post, or on a `hackernews` thread (POST /news). */
+            /** @description Comment count on a `github` issue, pull request or discussion, on a `reddit` post, on an `x` post (replies), or on a `hackernews` thread (POST /news). */
             num_comments?: number;
             /**
              * Format: uri
@@ -493,6 +508,56 @@ export interface components {
             story_url?: string;
             /** @description POST /news with `search_service: "hackernews"` only: upvotes on the thread. */
             points?: number;
+            /** @description `search_service: "x"` only: the post id. */
+            post_id?: string;
+            /** @description `x` only: handle of the account that posted, without the @. */
+            author_username?: string;
+            /** @description `x` only: display name of the account that posted. */
+            author_name?: string;
+            /** @description `x` only: numeric user id of the account that posted. */
+            author_id?: string;
+            /**
+             * Format: uri
+             * @description `x` only: avatar URL of the account that posted.
+             */
+            author_image?: string;
+            /** @description `x` only: whether the account shows a verified checkmark. */
+            author_verified?: boolean;
+            /** @description `x` only: follower count of the account that posted. */
+            author_followers?: number;
+            /** @description `x` only: likes on the post. */
+            like_count?: number;
+            /** @description `x` only: reposts of the post. */
+            repost_count?: number;
+            /** @description `x` only: quotes of the post. */
+            quote_count?: number;
+            /** @description `x` only: bookmarks of the post. */
+            bookmark_count?: number;
+            /** @description `x` only: views of the post. Omitted when X reports none, as for older posts. */
+            view_count?: number;
+            /** @description `x` only: whether the post replies to another post. */
+            is_reply?: boolean;
+            /** @description `x` only: id of the first post in the thread. */
+            conversation_id?: string;
+            /** @description `x` only: id of the post this one replies to. Omitted when it is not a reply. */
+            in_reply_to_id?: string;
+            /** @description `x` only: photos, videos and GIFs attached to the post. Empty when there are none. */
+            media?: {
+                /** @enum {string} */
+                type: "photo" | "video" | "gif";
+                /**
+                 * Format: uri
+                 * @description Image URL; for a video or GIF, its poster frame.
+                 */
+                url: string;
+                width?: number;
+                height?: number;
+                /**
+                 * Format: uri
+                 * @description Playable MP4 (highest bitrate) for a video or GIF.
+                 */
+                video_url?: string;
+            }[];
         } & {
             [key: string]: unknown;
         };
@@ -633,6 +698,35 @@ export interface components {
             r2Key?: string;
             /** Format: uri */
             zipUrl?: string | null;
+            /** @description Page counts for a finished task: discovered links, how many matched the path rules, how many max_pages left out, and how many pages were crawled or failed. */
+            stats?: {
+                discovered: number;
+                matched: number;
+                skipped: number;
+                crawled: number;
+                failed: number;
+            };
+            /** @enum {string} */
+            format?: "zip" | "json";
+            /** @description Pages that could not be crawled, with the reason. */
+            failed?: {
+                /** Format: uri */
+                url: string;
+                error: string;
+            }[];
+            /**
+             * Format: uri
+             * @description format=json only: the JSON result file, {"pages": [...], "failed": [...]}.
+             */
+            resultUrl?: string | null;
+            /** @description format=json only: the crawled pages in discovery order. Omitted when the result is larger than 5 MB; download resultUrl instead. */
+            pages?: {
+                /** Format: uri */
+                url: string;
+                title: string | null;
+                /** @description Page body as Markdown. */
+                content: string;
+            }[];
         } & {
             [key: string]: unknown;
         };
@@ -1746,6 +1840,24 @@ export interface operations {
                     "application/problem+json": components["schemas"]["ApiError"];
                 };
             };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+            /** @description Gone */
+            410: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -1798,6 +1910,17 @@ export interface operations {
                     url: string;
                     /** @enum {string} */
                     type?: "sitemap" | "all";
+                    /** @description Maximum number of pages to crawl, 1–1000; default 1000. Applied after include_paths/exclude_paths, in discovery order. */
+                    max_pages?: number;
+                    /** @description Only crawl URLs whose path matches one of these rules (up to 20). A rule without * is a path prefix on segment boundaries: "/docs" matches /docs and /docs/api but not /docsearch. A rule with * must match the whole path, and * matches any characters including /, e.g. "/blog/*". Empty or omitted means every discovered URL. */
+                    include_paths?: string[];
+                    /** @description Skip URLs whose path matches one of these rules (up to 20), using the same syntax as include_paths. Exclusion wins over inclusion. */
+                    exclude_paths?: string[];
+                    /**
+                     * @description Result format; default "zip". "zip" packages the pages as Markdown files behind zipUrl. "json" returns pages: [{url, title, content}] in the completed status response, plus resultUrl for the same JSON file.
+                     * @enum {string}
+                     */
+                    format?: "zip" | "json";
                 };
             };
         };

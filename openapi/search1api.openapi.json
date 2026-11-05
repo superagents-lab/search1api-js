@@ -68,6 +68,14 @@
           },
           "detail": {
             "type": "string"
+          },
+          "failureCategory": {
+            "type": "string",
+            "description": "`/crawl` and `/extract`: why the page could not be read, e.g. `NOT_FOUND`, `GONE`, `FORBIDDEN`, `AUTH_REQUIRED`, `BLOCKED`, `RATE_LIMITED`, `DNS_NOT_FOUND`, `TARGET_UNREACHABLE`, `TIMEOUT`, `QUALITY_CHECK`."
+          },
+          "upstreamStatus": {
+            "type": "integer",
+            "description": "`/crawl` and `/extract`: the HTTP status the target site itself returned, when it answered."
           }
         },
         "additionalProperties": true
@@ -521,6 +529,40 @@
               "sitemap",
               "all"
             ]
+          },
+          "max_pages": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "description": "Maximum number of pages to crawl, 1–1000; default 1000. Applied after include_paths/exclude_paths, in discovery order."
+          },
+          "include_paths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "maxItems": 20,
+            "description": "Only crawl URLs whose path matches one of these rules (up to 20). A rule without * is a path prefix on segment boundaries: \"/docs\" matches /docs and /docs/api but not /docsearch. A rule with * must match the whole path, and * matches any characters including /, e.g. \"/blog/*\". Empty or omitted means every discovered URL."
+          },
+          "exclude_paths": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 200
+            },
+            "maxItems": 20,
+            "description": "Skip URLs whose path matches one of these rules (up to 20), using the same syntax as include_paths. Exclusion wins over inclusion."
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "zip",
+              "json"
+            ],
+            "description": "Result format; default \"zip\". \"zip\" packages the pages as Markdown files behind zipUrl. \"json\" returns pages: [{url, title, content}] in the completed status response, plus resultUrl for the same JSON file."
           }
         },
         "required": [
@@ -562,7 +604,7 @@
       },
       "SearchResultMetadata": {
         "type": "object",
-        "description": "Optional engine-specific fields. Omitted when none apply. GitHub and Reddit fields appear on POST /search; Hacker News fields appear on POST /news.",
+        "description": "Optional engine-specific fields. Omitted when none apply. GitHub, Reddit and X fields appear on POST /search; Hacker News fields appear on POST /news.",
         "properties": {
           "kind": {
             "type": "string",
@@ -580,11 +622,11 @@
           },
           "language": {
             "type": "string",
-            "description": "Primary language of a `github` repository result (`metadata.kind: \"repo\"`). Omitted when GitHub reports none."
+            "description": "Primary language of a `github` repository result (`metadata.kind: \"repo\"`), or the language code X detected for an `x` post. Omitted when none is reported."
           },
           "num_comments": {
             "type": "integer",
-            "description": "Comment count on a `github` issue, pull request or discussion, on a `reddit` post, or on a `hackernews` thread (POST /news)."
+            "description": "Comment count on a `github` issue, pull request or discussion, on a `reddit` post, on an `x` post (replies), or on a `hackernews` thread (POST /news)."
           },
           "story_url": {
             "type": "string",
@@ -594,6 +636,104 @@
           "points": {
             "type": "integer",
             "description": "POST /news with `search_service: \"hackernews\"` only: upvotes on the thread."
+          },
+          "post_id": {
+            "type": "string",
+            "description": "`search_service: \"x\"` only: the post id."
+          },
+          "author_username": {
+            "type": "string",
+            "description": "`x` only: handle of the account that posted, without the @."
+          },
+          "author_name": {
+            "type": "string",
+            "description": "`x` only: display name of the account that posted."
+          },
+          "author_id": {
+            "type": "string",
+            "description": "`x` only: numeric user id of the account that posted."
+          },
+          "author_image": {
+            "type": "string",
+            "format": "uri",
+            "description": "`x` only: avatar URL of the account that posted."
+          },
+          "author_verified": {
+            "type": "boolean",
+            "description": "`x` only: whether the account shows a verified checkmark."
+          },
+          "author_followers": {
+            "type": "integer",
+            "description": "`x` only: follower count of the account that posted."
+          },
+          "like_count": {
+            "type": "integer",
+            "description": "`x` only: likes on the post."
+          },
+          "repost_count": {
+            "type": "integer",
+            "description": "`x` only: reposts of the post."
+          },
+          "quote_count": {
+            "type": "integer",
+            "description": "`x` only: quotes of the post."
+          },
+          "bookmark_count": {
+            "type": "integer",
+            "description": "`x` only: bookmarks of the post."
+          },
+          "view_count": {
+            "type": "integer",
+            "description": "`x` only: views of the post. Omitted when X reports none, as for older posts."
+          },
+          "is_reply": {
+            "type": "boolean",
+            "description": "`x` only: whether the post replies to another post."
+          },
+          "conversation_id": {
+            "type": "string",
+            "description": "`x` only: id of the first post in the thread."
+          },
+          "in_reply_to_id": {
+            "type": "string",
+            "description": "`x` only: id of the post this one replies to. Omitted when it is not a reply."
+          },
+          "media": {
+            "type": "array",
+            "description": "`x` only: photos, videos and GIFs attached to the post. Empty when there are none.",
+            "items": {
+              "type": "object",
+              "required": [
+                "type",
+                "url"
+              ],
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "photo",
+                    "video",
+                    "gif"
+                  ]
+                },
+                "url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Image URL; for a video or GIF, its poster frame."
+                },
+                "width": {
+                  "type": "integer"
+                },
+                "height": {
+                  "type": "integer"
+                },
+                "video_url": {
+                  "type": "string",
+                  "format": "uri",
+                  "description": "Playable MP4 (highest bitrate) for a video or GIF."
+                }
+              }
+            }
           }
         },
         "additionalProperties": true
@@ -1092,6 +1232,102 @@
               "null"
             ],
             "format": "uri"
+          },
+          "stats": {
+            "type": "object",
+            "description": "Page counts for a finished task: discovered links, how many matched the path rules, how many max_pages left out, and how many pages were crawled or failed.",
+            "required": [
+              "discovered",
+              "matched",
+              "skipped",
+              "crawled",
+              "failed"
+            ],
+            "properties": {
+              "discovered": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "matched": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "skipped": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "crawled": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "failed": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "zip",
+              "json"
+            ]
+          },
+          "failed": {
+            "type": "array",
+            "description": "Pages that could not be crawled, with the reason.",
+            "items": {
+              "type": "object",
+              "required": [
+                "url",
+                "error"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "error": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "resultUrl": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uri",
+            "description": "format=json only: the JSON result file, {\"pages\": [...], \"failed\": [...]}."
+          },
+          "pages": {
+            "type": "array",
+            "description": "format=json only: the crawled pages in discovery order. Omitted when the result is larger than 5 MB; download resultUrl instead.",
+            "items": {
+              "type": "object",
+              "required": [
+                "url",
+                "title",
+                "content"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "title": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "content": {
+                  "type": "string",
+                  "description": "Page body as Markdown."
+                }
+              }
+            }
           }
         },
         "additionalProperties": true
@@ -3093,6 +3329,26 @@
               }
             }
           },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3179,7 +3435,7 @@
       "post": {
         "operationId": "deepcrawl",
         "summary": "Deep crawl a website across multiple pages",
-        "description": "Start an asynchronous crawl of an entire site and package the pages as documents. Use it for whole-site ingestion; a single page is POST /crawl. The call returns a task id immediately rather than the result — poll GET /deepcrawl/status/{taskId} until the task reports completion. Costs 20 credits per request.",
+        "description": "Start an asynchronous crawl of an entire site and package the pages as documents. Use it for whole-site ingestion; a single page is POST /crawl. Narrow the crawl with include_paths/exclude_paths and cap it with max_pages; a task costs the same regardless of page count. Set format to \"json\" to get the pages inline in the status response instead of a ZIP. The call returns a task id immediately rather than the result — poll GET /deepcrawl/status/{taskId} until the task reports completion. Costs 20 credits per request.",
         "tags": [
           "Crawl"
         ],
@@ -3308,12 +3564,78 @@
                       "sitemap",
                       "all"
                     ]
+                  },
+                  "max_pages": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000,
+                    "description": "Maximum number of pages to crawl, 1–1000; default 1000. Applied after include_paths/exclude_paths, in discovery order."
+                  },
+                  "include_paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "maxItems": 20,
+                    "description": "Only crawl URLs whose path matches one of these rules (up to 20). A rule without * is a path prefix on segment boundaries: \"/docs\" matches /docs and /docs/api but not /docsearch. A rule with * must match the whole path, and * matches any characters including /, e.g. \"/blog/*\". Empty or omitted means every discovered URL."
+                  },
+                  "exclude_paths": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 200
+                    },
+                    "maxItems": 20,
+                    "description": "Skip URLs whose path matches one of these rules (up to 20), using the same syntax as include_paths. Exclusion wins over inclusion."
+                  },
+                  "format": {
+                    "type": "string",
+                    "enum": [
+                      "zip",
+                      "json"
+                    ],
+                    "description": "Result format; default \"zip\". \"zip\" packages the pages as Markdown files behind zipUrl. \"json\" returns pages: [{url, title, content}] in the completed status response, plus resultUrl for the same JSON file."
                   }
                 },
                 "required": [
                   "url"
                 ],
                 "additionalProperties": false
+              },
+              "examples": {
+                "wholeSite": {
+                  "summary": "Whole site",
+                  "description": "Crawl every URL the site lists in its sitemap, up to 1000 pages.",
+                  "value": {
+                    "url": "https://example.com"
+                  }
+                },
+                "docsSection": {
+                  "summary": "One section, capped",
+                  "description": "Crawl at most 20 pages under /docs/, skipping the changelog.",
+                  "value": {
+                    "url": "https://hono.dev/docs/",
+                    "max_pages": 20,
+                    "include_paths": [
+                      "/docs/"
+                    ],
+                    "exclude_paths": [
+                      "/docs/changelog"
+                    ]
+                  }
+                },
+                "jsonPages": {
+                  "summary": "Pages as JSON",
+                  "description": "Return url, title and Markdown content for each page in the status response instead of a ZIP.",
+                  "value": {
+                    "url": "https://hono.dev/docs/",
+                    "max_pages": 20,
+                    "format": "json"
+                  }
+                }
               }
             }
           }
@@ -3324,7 +3646,7 @@
       "get": {
         "operationId": "deepcrawlStatus",
         "summary": "Check deepcrawl task status",
-        "description": "Poll a deepcrawl task started by POST /deepcrawl. Returns the task's current state and, once it finishes, where to retrieve the packaged result. Safe to call repeatedly. Free to call.",
+        "description": "Poll a deepcrawl task started by POST /deepcrawl. Returns the task's current state and, once it finishes, page counts (stats), failed URLs, and the result: zipUrl for format=zip, or the pages inline plus resultUrl for format=json. Safe to call repeatedly. Free to call.",
         "tags": [
           "Crawl"
         ],
