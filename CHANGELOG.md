@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.1 - 2026-11-05
+
+The `X-Search1API-Client` request header now reports the installed version (`typescript/0.6.1`). Since 0.3.0 it had always said `typescript/0.3.0`. The version lives in `src/version.ts` and a test keeps it equal to `package.json`. No API changes.
+
 ## 0.6.0 - 2026-11-05
 
 Adds `DeepcrawlOptions` for `deepcrawl()` and `startDeepcrawl()`: `maxPages` (1-1000, default 1000; sent as `max_pages`), `includePaths` / `excludePaths` (up to 20 path rules each; sent as `include_paths` / `exclude_paths`) and `format` (`'zip'` by default, or `'json'`). `DeepcrawlStatusResponse` gains `format`, `stats` (`discovered`, `matched`, `skipped`, `crawled`, `failed`), `failed` (`{ url, error }[]`), and for `format: 'json'` `resultUrl` plus `pages` (`{ url, title, content }[]`, omitted above 5 MB). Still 20 credits per task. The bundled OpenAPI snapshot also records the X search metadata fields, `failureCategory` / `upstreamStatus` on crawl and extract errors, and the 404/410 responses of `POST /extract`.

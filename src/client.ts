@@ -43,6 +43,7 @@ import type {
   UsageResponse,
   WaitForDeepcrawlOptions,
 } from './types.js';
+import { SDK_VERSION } from './version.js';
 
 const DEFAULT_BASE_URL = 'https://api.search1api.com';
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -607,7 +608,7 @@ export class Search1API {
     const headers = new Headers({
       Accept: 'application/json',
       Authorization: `Bearer ${this.apiKey}`,
-      'X-Search1API-Client': 'typescript/0.3.0',
+      'X-Search1API-Client': `typescript/${SDK_VERSION}`,
       ...this.defaultHeaders,
       ...options.headers,
     });
