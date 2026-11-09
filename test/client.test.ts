@@ -187,6 +187,37 @@ describe('Search1API TypeScript client', () => {
     setTimeoutSpy.mockRestore();
   });
 
+  it('sends the extract prompt and response_format', async () => {
+    const body = {
+      success: true,
+      extractParameters: { url: 'https://example.com' },
+      results: { title: 'Example Domain' },
+    };
+    const fetch = vi.fn().mockResolvedValue(jsonResponse(body));
+    const client = new Search1API({ apiKey: 'test-key', fetch });
+    const responseFormat = {
+      type: 'json_schema',
+      json_schema: {
+        type: 'object',
+        properties: { title: { type: 'string' } },
+      },
+    } as const;
+
+    const result = await client.extract<{ title: string }>(
+      'https://example.com',
+      { prompt: 'Extract the page title.', responseFormat }
+    );
+
+    expect(result.results.title).toBe('Example Domain');
+    const [url, init] = fetch.mock.calls[0] as [URL, RequestInit];
+    expect(url.toString()).toBe('https://api.search1api.com/extract');
+    expect(JSON.parse(String(init.body))).toEqual({
+      url: 'https://example.com',
+      prompt: 'Extract the page title.',
+      response_format: responseFormat,
+    });
+  });
+
   it('sends maps options in snake_case', async () => {
     const body = {
       searchParameters: {

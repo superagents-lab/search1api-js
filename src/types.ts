@@ -337,9 +337,18 @@ export interface TrendingResponse {
   results: TrendingResult[];
 }
 
+/** Shape of the extract result: your JSON Schema, wrapped. */
+export interface ExtractResponseFormat {
+  type: 'json_schema';
+  /** The JSON Schema the result must follow (the schema itself, not `{ name, schema }`). */
+  json_schema: Record<string, JsonValue>;
+}
+
 export interface ExtractOptions {
-  prompt?: string;
-  responseFormat?: Record<string, JsonValue>;
+  /** What to extract from the page, in natural language. Must not be blank. */
+  prompt: string;
+  /** Sent as `response_format`. */
+  responseFormat: ExtractResponseFormat;
 }
 
 export interface ExtractResponse<T = JsonValue> {

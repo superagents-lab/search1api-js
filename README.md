@@ -143,9 +143,38 @@ await writeFile('screenshot.png', screenshot.data);
 console.log(screenshot.contentType, screenshot.requestId);
 ```
 
+## Extract
+
+`extract` pulls structured fields out of one page. Both `prompt` and
+`responseFormat` are required; wrap your JSON Schema as
+`{ type: 'json_schema', json_schema: <schema> }`:
+
+```ts
+const response = await client.extract<{ title: string; price: number }>(
+  'https://example.com/product',
+  {
+    prompt: 'Extract the product name and price.',
+    responseFormat: {
+      type: 'json_schema',
+      json_schema: {
+        type: 'object',
+        properties: {
+          title: { type: 'string' },
+          price: { type: 'number' },
+        },
+      },
+    },
+  }
+);
+
+console.log(response.results.title, response.results.price);
+```
+
+A request without either field fails with `UnprocessableEntityError` (`422`).
+
 ## Other APIs
 
-The client also provides `news`, `crawl`, `sitemap`, `trending`, `extract`,
+The client also provides `news`, `crawl`, `sitemap`, `trending`,
 `usage`, and their batch variants where the HTTP API supports them.
 
 `feedback` reports a Search1API problem, missing capability, or confusing

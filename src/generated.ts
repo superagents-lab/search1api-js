@@ -203,7 +203,7 @@ export interface paths {
         put?: never;
         /**
          * Extract structured content from a URL
-         * @description Pull structured data out of a single webpage using a natural-language prompt and a JSON schema you supply. Use it when you need specific fields — prices, specifications, contact details — rather than the whole document; when you want the full text, use POST /crawl. Costs 10 credits per request.
+         * @description Pull structured data out of a single webpage using a natural-language prompt and a JSON schema you supply; both are required, and a request missing either returns 422 with the fields to fix. Use it when you need specific fields — prices, specifications, contact details — rather than the whole document; when you want the full text, use POST /crawl. Costs 10 credits per request.
          */
         post: operations["extract"];
         delete?: never;
@@ -312,7 +312,7 @@ export interface components {
             title?: string;
             status?: number;
             detail?: string;
-            /** @description `/crawl` and `/extract`: why the page could not be read, e.g. `NOT_FOUND`, `GONE`, `FORBIDDEN`, `AUTH_REQUIRED`, `BLOCKED`, `RATE_LIMITED`, `DNS_NOT_FOUND`, `TARGET_UNREACHABLE`, `TIMEOUT`, `QUALITY_CHECK`. */
+            /** @description `/crawl` and `/extract`: why the page could not be read, e.g. `NOT_FOUND`, `GONE`, `FORBIDDEN`, `AUTH_REQUIRED`, `BLOCKED`, `RATE_LIMITED`, `DNS_NOT_FOUND`, `TARGET_UNREACHABLE`, `TARGET_BAD_REQUEST`, `TIMEOUT`, `QUALITY_CHECK`. */
             failureCategory?: string;
             /** @description `/crawl` and `/extract`: the HTTP status the target site itself returned, when it answered. */
             upstreamStatus?: number;
@@ -449,11 +449,21 @@ export interface components {
             max_results?: number;
         };
         ExtractRequest: {
-            /** Format: uri */
+            /**
+             * Format: uri
+             * @description The webpage to extract data from.
+             */
             url: string;
-            prompt?: string;
-            response_format?: {
-                [key: string]: unknown;
+            /** @description Natural-language instructions: what to extract from the page, e.g. "Extract the product name and price." */
+            prompt: string;
+            /** @description Shape of the result. Wrap your JSON Schema as {"type": "json_schema", "json_schema": <schema>}. */
+            response_format: {
+                /** @enum {string} */
+                type: "json_schema";
+                /** @description The JSON Schema the result must follow, e.g. {"type": "object", "properties": {"title": {"type": "string"}}}. Pass the schema itself, not an object wrapping it under name/schema. */
+                json_schema: {
+                    [key: string]: unknown;
+                };
             };
         };
         DeepcrawlRequest: {
@@ -1794,11 +1804,21 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    /** Format: uri */
+                    /**
+                     * Format: uri
+                     * @description The webpage to extract data from.
+                     */
                     url: string;
-                    prompt?: string;
-                    response_format?: {
-                        [key: string]: unknown;
+                    /** @description Natural-language instructions: what to extract from the page, e.g. "Extract the product name and price." */
+                    prompt: string;
+                    /** @description Shape of the result. Wrap your JSON Schema as {"type": "json_schema", "json_schema": <schema>}. */
+                    response_format: {
+                        /** @enum {string} */
+                        type: "json_schema";
+                        /** @description The JSON Schema the result must follow, e.g. {"type": "object", "properties": {"title": {"type": "string"}}}. Pass the schema itself, not an object wrapping it under name/schema. */
+                        json_schema: {
+                            [key: string]: unknown;
+                        };
                     };
                 };
             };
