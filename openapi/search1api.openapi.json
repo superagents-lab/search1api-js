@@ -71,7 +71,7 @@
           },
           "failureCategory": {
             "type": "string",
-            "description": "`/crawl` and `/extract`: why the page could not be read, e.g. `NOT_FOUND`, `GONE`, `FORBIDDEN`, `AUTH_REQUIRED`, `BLOCKED`, `RATE_LIMITED`, `DNS_NOT_FOUND`, `TARGET_UNREACHABLE`, `TIMEOUT`, `QUALITY_CHECK`."
+            "description": "`/crawl` and `/extract`: why the page could not be read, e.g. `NOT_FOUND`, `GONE`, `FORBIDDEN`, `AUTH_REQUIRED`, `BLOCKED`, `RATE_LIMITED`, `DNS_NOT_FOUND`, `TARGET_UNREACHABLE`, `TARGET_BAD_REQUEST`, `TIMEOUT`, `QUALITY_CHECK`."
           },
           "upstreamStatus": {
             "type": "integer",
@@ -501,18 +501,41 @@
         "properties": {
           "url": {
             "type": "string",
-            "format": "uri"
+            "format": "uri",
+            "description": "The webpage to extract data from."
           },
           "prompt": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "description": "Natural-language instructions: what to extract from the page, e.g. \"Extract the product name and price.\""
           },
           "response_format": {
             "type": "object",
-            "additionalProperties": {}
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "json_schema"
+                ]
+              },
+              "json_schema": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "The JSON Schema the result must follow, e.g. {\"type\": \"object\", \"properties\": {\"title\": {\"type\": \"string\"}}}. Pass the schema itself, not an object wrapping it under name/schema."
+              }
+            },
+            "required": [
+              "type",
+              "json_schema"
+            ],
+            "additionalProperties": false,
+            "description": "Shape of the result. Wrap your JSON Schema as {\"type\": \"json_schema\", \"json_schema\": <schema>}."
           }
         },
         "required": [
-          "url"
+          "url",
+          "prompt",
+          "response_format"
         ],
         "additionalProperties": false
       },
@@ -3270,7 +3293,7 @@
       "post": {
         "operationId": "extract",
         "summary": "Extract structured content from a URL",
-        "description": "Pull structured data out of a single webpage using a natural-language prompt and a JSON schema you supply. Use it when you need specific fields — prices, specifications, contact details — rather than the whole document; when you want the full text, use POST /crawl. Costs 10 credits per request.",
+        "description": "Pull structured data out of a single webpage using a natural-language prompt and a JSON schema you supply; both are required, and a request missing either returns 422 with the fields to fix. Use it when you need specific fields — prices, specifications, contact details — rather than the whole document; when you want the full text, use POST /crawl. Costs 10 credits per request.",
         "tags": [
           "Crawl"
         ],
@@ -3279,13 +3302,13 @@
             "id": "js",
             "lang": "ts",
             "label": "TypeScript SDK",
-            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst response = await client.extract('https://example.com', {\n  prompt: 'Extract the page title and description.',\n});\n\nconsole.log(response);"
+            "source": "import { Search1API } from '@search1api/client';\n\nconst client = new Search1API();\nconst response = await client.extract('https://example.com', {\n  prompt: 'Extract the page title and description.',\n  responseFormat: {\n    type: 'json_schema',\n    json_schema: {\n      type: 'object',\n      properties: {\n        title: { type: 'string' },\n        description: { type: 'string' },\n      },\n    },\n  },\n});\n\nconsole.log(response.results);"
           },
           {
             "id": "python",
             "lang": "python",
             "label": "Python SDK",
-            "source": "from search1api import Search1API\n\nclient = Search1API()\nresponse = client.extract(\n    \"https://example.com\",\n    prompt=\"Extract the page title and description.\",\n)\n\nprint(response)"
+            "source": "from search1api import Search1API\n\nclient = Search1API()\nresponse = client.extract(\n    \"https://example.com\",\n    prompt=\"Extract the page title and description.\",\n    response_format={\n        \"type\": \"json_schema\",\n        \"json_schema\": {\n            \"type\": \"object\",\n            \"properties\": {\n                \"title\": {\"type\": \"string\"},\n                \"description\": {\"type\": \"string\"},\n            },\n        },\n    },\n)\n\nprint(response[\"results\"])"
           }
         ],
         "responses": {
@@ -3411,20 +3434,70 @@
                 "properties": {
                   "url": {
                     "type": "string",
-                    "format": "uri"
+                    "format": "uri",
+                    "description": "The webpage to extract data from."
                   },
                   "prompt": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Natural-language instructions: what to extract from the page, e.g. \"Extract the product name and price.\""
                   },
                   "response_format": {
                     "type": "object",
-                    "additionalProperties": {}
+                    "properties": {
+                      "type": {
+                        "type": "string",
+                        "enum": [
+                          "json_schema"
+                        ]
+                      },
+                      "json_schema": {
+                        "type": "object",
+                        "additionalProperties": {},
+                        "description": "The JSON Schema the result must follow, e.g. {\"type\": \"object\", \"properties\": {\"title\": {\"type\": \"string\"}}}. Pass the schema itself, not an object wrapping it under name/schema."
+                      }
+                    },
+                    "required": [
+                      "type",
+                      "json_schema"
+                    ],
+                    "additionalProperties": false,
+                    "description": "Shape of the result. Wrap your JSON Schema as {\"type\": \"json_schema\", \"json_schema\": <schema>}."
                   }
                 },
                 "required": [
-                  "url"
+                  "url",
+                  "prompt",
+                  "response_format"
                 ],
                 "additionalProperties": false
+              },
+              "examples": {
+                "pageSummary": {
+                  "summary": "Title and description",
+                  "description": "Wrap the JSON Schema of the result as {\"type\": \"json_schema\", \"json_schema\": <schema>}.",
+                  "value": {
+                    "url": "https://example.com",
+                    "prompt": "Extract the page title and description.",
+                    "response_format": {
+                      "type": "json_schema",
+                      "json_schema": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "title"
+                        ]
+                      }
+                    }
+                  }
+                }
               }
             }
           }

@@ -409,7 +409,7 @@ export class Search1API {
 
   async extract<T = JsonValue>(
     url: string,
-    options: ExtractOptions = {},
+    options: ExtractOptions,
     requestOptions: RequestOptions = {}
   ): Promise<ExtractResponse<T>> {
     return this.requestJson<ExtractResponse<T>>('/extract', {

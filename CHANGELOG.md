@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.0 - 2026-11-09
+
+Breaking: `extract(url, options)` requires `options.prompt` and `options.responseFormat`, matching the API. `responseFormat` is typed as `ExtractResponseFormat`: `{ type: 'json_schema', json_schema: <your JSON Schema> }`. The API never accepted a request without them; it now rejects one with `422` and an `errors` array instead of `400`, which the client raises as `UnprocessableEntityError`. The bundled OpenAPI snapshot records the required fields, the request example and `TARGET_BAD_REQUEST` in `failureCategory`.
+
 ## 0.6.1 - 2026-11-05
 
 The `X-Search1API-Client` request header now reports the installed version (`typescript/0.6.1`). Since 0.3.0 it had always said `typescript/0.3.0`. The version lives in `src/version.ts` and a test keeps it equal to `package.json`. No API changes.
